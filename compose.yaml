@@ -21,13 +21,13 @@ services:
       DB_PREFIX: mdl_
       REDIS_SESSION_ID_HOST: redis
       REDIS_SESSION_ID_PORT: 6379
-      REDIS_SESSION_ID_AUTH_STRING: ""
+      REDIS_SESSION_ID_AUTH_STRING: "moodledevpass"
       REDIS_SESSION_IP_AND_PORT: redis:6379
-      REDIS_SESSION_AUTH_STRING: ""
+      REDIS_SESSION_AUTH_STRING: "moodledevpass"
       REDIS_APP_IP_AND_PORT: redis:6379
-      REDIS_APP_AUTH_STRING: ""
+      REDIS_APP_AUTH_STRING: "moodledevpass"
       REDIS_LOCK_HOST_AND_PORT: redis:6379
-      REDIS_LOCK_AUTH_STRING: ""
+      REDIS_LOCK_AUTH_STRING: "moodledevpass"
       ENABLE_FRESHCLAM: "no"
       ENABLE_MOOSH_BOOTSTRAP: "no"
     entrypoint:
@@ -77,13 +77,13 @@ services:
 
   redis:
     image: redis:7-alpine
-    command: redis-server --maxmemory-policy allkeys-lru
+    command: redis-server --requirepass "moodledevpass" --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "moodledevpass", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -89,7 +89,7 @@ RUN mkdir -p "$MOODLE_PATH" "$MOODLE_DATAROOT_PATH" \
     && mkdir -p "$MOODLE_PATH/local" \
     && cp /root/.templates/moodle/local/defaults.php "$MOODLE_PATH/local/defaults.php" \
     && chown -R www:www "$MOODLE_ROOT_PATH" /var/lib/nginx \
-    && chmod 1700 /opt/*.sh \
-    && chown -R www:www /opt/*.sh
+    && chmod 0755 /opt/*.sh \
+    && chown -R root:root /opt/*.sh
 
 ENTRYPOINT [ "/opt/entrypoint.sh" ]

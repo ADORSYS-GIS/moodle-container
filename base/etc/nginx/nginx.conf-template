@@ -126,8 +126,8 @@ http {
     # Allow fpm ping and status from localhost
     location ~ ^/(fpm-status|fpm-ping)$ {
       access_log on;
-      #allow 127.0.0.1;
-      #deny all;
+      allow 127.0.0.1;
+      deny all;
       include fastcgi_params;
       fastcgi_pass unix:/var/run/php8.2-fpm-moodle.sock;
       fastcgi_read_timeout 300;

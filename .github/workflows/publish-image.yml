@@ -3,10 +3,6 @@ name: Build and Publish Moodle Nginx Image
 on:
   workflow_dispatch:
     inputs:
-      moodle_version:
-        description: 'Moodle Version/Tag for the build'
-        required: true
-        default: '5.0.0'
       push_latest:
         description: 'Also tag and push as latest'
         type: boolean
@@ -47,13 +43,39 @@ jobs:
           OWNER: ${{ github.repository_owner }}
           REPO: ${{ github.event.repository.name }}
 
+      - name: Extract Moodle Version from Dockerfile
+        id: extractor
+        run: |
+          # Find the line containing MOODLE_BUILD_URL in Dockerfile
+          BUILD_URL=$(grep 'MOODLE_BUILD_URL=' Dockerfile | sed -E "s/.*MOODLE_BUILD_URL='([^']+)'.*/\1/")
+          echo "Found MOODLE_BUILD_URL in Dockerfile: $BUILD_URL"
+          
+          # Extract the archive filename
+          FILENAME=$(basename "$BUILD_URL")
+          
+          # Check if the filename follows standard latest-XYZ or version-specific formats
+          if [[ "$FILENAME" =~ moodle-latest-([0-9]+)\.tgz ]]; then
+            BRANCH="${BASH_REMATCH[1]}"
+            MAJOR="${BRANCH:0:1}"
+            MINOR=$(echo "${BRANCH:1}" | sed 's/^0//')
+            [ -z "$MINOR" ] && MINOR="0"
+            TAG="${MAJOR}.${MINOR}"
+          elif [[ "$FILENAME" =~ moodle-([0-9]+\.[0-9]+\.[0-9]+)\.tgz ]]; then
+            TAG="${BASH_REMATCH[1]}"
+          else
+            TAG=$(echo "$FILENAME" | sed -E 's/moodle-(.*)\.tgz/\1/')
+          fi
+          
+          echo "Extracted Moodle Version Tag: $TAG"
+          echo "version_tag=$TAG" >> "$GITHUB_OUTPUT"
+
       - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ steps.repo_info.outputs.owner }}/${{ steps.repo_info.outputs.repo }}
           tags: |
-            type=raw,value=${{ github.event.inputs.moodle_version }}
+            type=raw,value=${{ steps.extractor.outputs.version_tag }}
             type=raw,value=latest,enable=${{ github.event.inputs.push_latest == 'true' }}
 
       - name: Build and push Docker image
@@ -67,5 +89,3 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            MOODLE_BUILD_URL=https://download.moodle.org/download.php/direct/stable500/moodle-latest-500.tgz

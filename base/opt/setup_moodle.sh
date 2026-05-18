@@ -122,16 +122,18 @@ apply_config_php_customizations() {
     | { head -n 23 $MOODLE_PATH/config.php.bak; cat /dev/stdin; tail -n +24 $MOODLE_PATH/config.php.bak; } > $MOODLE_PATH/config.php
 }
 
-echo  "Syncing NGINX config files into place ..."
-sudo -u root cp -R /root/etc/nginx/* /etc/nginx/
-echo  "Done syncing NGINX config files ..."
+if [ -d "/root/etc" ]; then
+  echo  "Syncing NGINX config files into place ..."
+  sudo -u root cp -R /root/etc/nginx/* /etc/nginx/
+  echo  "Done syncing NGINX config files ..."
 
-echo  "Syncing PHP8.2 config files into place ..."
-sudo -u root cp -R /root/etc/php82/* /etc/php82/
-echo  "Done syncing PHP8.2 config files ..."
+  echo  "Syncing PHP8.2 config files into place ..."
+  sudo -u root cp -R /root/etc/php82/* /etc/php82/
+  echo  "Done syncing PHP8.2 config files ..."
 
-echo  "Cleaning root's temp files ..."
-rm -rvf /root/etc
+  echo  "Cleaning root's temp files ..."
+  rm -rvf /root/etc
+fi
 
 # run envsubst
 envsubst \$MOODLE_ROOT_PATH < /etc/nginx/nginx.conf-template > /etc/nginx/nginx.conf
