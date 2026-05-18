@@ -1,0 +1,36 @@
+name: Test Docker Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-build:
+    name: Test Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        description: Set up QEMU for multi-platform support
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        description: Set up Docker Buildx for advanced build features
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build Docker image (Dry Run)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: moodle-nginx:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            MOODLE_BUILD_URL=https://download.moodle.org/download.php/direct/stable500/moodle-latest-500.tgz
