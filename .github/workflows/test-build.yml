@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
@@ -22,7 +22,7 @@ jobs:
         uses: docker/setup-buildx-action@v4
 
       - name: Build Docker image (Dry Run)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ./Dockerfile
@@ -30,5 +30,3 @@ jobs:
           tags: moodle-nginx:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args: |
-            MOODLE_BUILD_URL=https://download.moodle.org/download.php/direct/stable500/moodle-latest-500.tgz
