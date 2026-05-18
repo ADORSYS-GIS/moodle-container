@@ -26,7 +26,6 @@ A production-grade, highly optimized Docker setup for **Moodle** powered by **Al
 moodle-container/
 ├── .github/
 │   └── workflows/
-│       ├── lint-codebase.yml     # Automated QA linting workflow
 │       ├── publish-image.yml     # Manual CI/CD workflow targeting GHCR
 │       └── test-build.yml        # Dry-run compilation test on push/PR
 ├── base/                         # Base configuration templates
