@@ -130,9 +130,6 @@ if [ -d "/root/etc" ]; then
   echo  "Syncing PHP8.2 config files into place ..."
   sudo -u root cp -R /root/etc/php82/* /etc/php82/
   echo  "Done syncing PHP8.2 config files ..."
-
-  echo  "Cleaning root's temp files ..."
-  rm -rvf /root/etc
 fi
 
 # run envsubst
