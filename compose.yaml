@@ -1,6 +1,8 @@
 services:
   moodle-init:
-    image: ghcr.io/adorsys-gis/moodle-container:latest
+    build: &moodle_build
+      context: .
+      dockerfile: Dockerfile
     environment: &moodle_env
       SITE_URL: http://localhost:8080
       MOODLE_LANGUAGE: en
@@ -27,11 +29,11 @@ services:
       REDIS_LOCK_AUTH_STRING: "moodledevpass"
       ENABLE_FRESHCLAM: "no"
       ENABLE_MOOSH_BOOTSTRAP: "no"
+      ENABLE_OBJECTFS: "yes"
     entrypoint:
       - /opt/setup_moodle.sh
     volumes:
       - moodledata_data:/moodleroot/moodledata
-      - moodle_core_data:/moodleroot/moodle
     depends_on:
       mariadb:
         condition: service_healthy
@@ -41,7 +43,22 @@ services:
       #   condition: service_completed_successfully
 
   moodle:
-    image: ghcr.io/adorsys-gis/moodle-container:latest
+    build: *moodle_build
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        . /opt/setup_moodle.sh
+        if [ "$${ENABLE_OBJECTFS:-no}" = "yes" ] && ! grep -q "alternative_file_system_class" /moodleroot/moodle/config.php; then
+          echo "Injecting ObjectFS into config.php from Compose..."
+          sed -i "/require_once/i \$$CFG->alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system';" /moodleroot/moodle/config.php
+          sed -i "/require_once/i \$$CFG->disablebyteserving = true;" /moodleroot/moodle/config.php
+          sed -i "/require_once/i unset(\$$CFG->xsendfilealiases);" /moodleroot/moodle/config.php
+          sed -i "/require_once/i \$$CFG->xsendfile = null;" /moodleroot/moodle/config.php
+        fi
+        /usr/sbin/crond
+        /usr/sbin/php-fpm82
+        /usr/sbin/nginx -g 'daemon off;'
     ports:
       - "8080:8080"
     environment:
@@ -68,7 +85,6 @@ services:
       OBJECTFS_SIGNING_METHOD: s3
     volumes:
       - moodledata_data:/moodleroot/moodledata
-      - moodle_core_data:/moodleroot/moodle
       - objectfs_plugin:/moodleroot/moodle/admin/tool/objectfs:ro
       # - plugins_downloads:/moodleroot/moodle/plugins/downloaded:ro
     depends_on:
@@ -136,7 +152,7 @@ services:
           - minio.local
           - moodle.minio.local
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      test: ["CMD", "mc", "ready", "local"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -171,10 +187,13 @@ services:
       - /scripts/download_tool_objectfs.sh
 
   objectfs-init:
-    image: ghcr.io/adorsys-gis/moodle-container:latest
+    build: *moodle_build
     entrypoint:
       - /bin/sh
-      - /scripts/objectfs_init.sh
+      - -c
+      - |
+        . /opt/setup_moodle.sh
+        sh /scripts/objectfs_init.sh
     environment:
       <<: *moodle_env
       ENABLE_OBJECTFS: "yes"
@@ -199,7 +218,6 @@ services:
       OBJECTFS_SIGNING_METHOD: s3
     volumes:
       - moodledata_data:/moodleroot/moodledata
-      - moodle_core_data:/moodleroot/moodle
       - objectfs_plugin:/moodleroot/moodle/admin/tool/objectfs:ro
       - ./.docker/objectfs/objectfs_init.sh:/scripts/objectfs_init.sh:ro
       - ./.docker/objectfs/configure_objectfs.php:/scripts/configure_objectfs.php:ro
@@ -265,7 +283,6 @@ services:
 
 volumes:
   moodledata_data:
-  moodle_core_data:
   mariadb_data:
   redis_data:
   minio_data:

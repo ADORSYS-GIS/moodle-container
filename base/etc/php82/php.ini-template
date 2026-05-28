@@ -865,7 +865,7 @@ upload_tmp_dir = '/var/moodlecache/utemp'
 
 ; Maximum allowed size for uploaded files.
 ; https://php.net/upload-max-filesize
-upload_max_filesize = 512M
+upload_max_filesize = 0
 
 ; Maximum number of files that can be uploaded via a single request
 max_file_uploads = 16
