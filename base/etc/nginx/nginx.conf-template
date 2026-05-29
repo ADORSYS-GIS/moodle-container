@@ -58,7 +58,7 @@ http {
     proxy_busy_buffers_size 256k;
 
     # Upload limit
-    # client_max_body_size ${client_max_body_size};
+    client_max_body_size 0;
     client_body_buffer_size 512k;
 
     root $MOODLE_ROOT_PATH/moodle;
