@@ -12,6 +12,23 @@ A production-grade, highly optimized, and hardened Docker setup for **Moodle** p
 ## 📖 Navigating the Documentation
 To maintain clean, professional documentation, we have separated high-level project overviews from deep-dive technical manuals:
 * 🚀 **[Getting Started Guide](GETTING_STARTED.md)**: Detailed local developer setup, step-by-step installation commands, complete environment variable reference, and troubleshooting.
+* 📚 **Technical Docs**: [docker-image](docs/docker-image.md) · [nginx-php-configs](docs/nginx-php-configs.md) · [objectfs](docs/objectfs.md) · [redis-integration](docs/redis_integration.md)
+
+---
+
+## ☸️ Helm Chart
+
+This repository hosts a Helm chart published via **GitHub Pages** using the [chart-releaser-action](https://helm.sh/docs/howto/chart_releaser_action/). Chart releases are automated — every push to `main` that changes `charts/moodle/**` triggers the workflow, which publishes a GitHub Release and updates the `gh-pages` branch index.
+
+### Quick start
+
+```bash
+helm repo add moodle https://adorsys-gis.github.io/moodle-container
+helm repo update
+helm install my-moodle moodle/moodle
+```
+
+> Full configuration reference and examples: [charts/moodle/README.md](charts/moodle/README.md)
 
 ---
 
@@ -34,7 +51,13 @@ moodle-container/
 ├── .github/
 │   └── workflows/
 │       ├── publish-image.yml     # Manual CI/CD release workflow targeting GHCR
+│       ├── release-chart.yml     # Automated Helm chart release to gh-pages
 │       └── test-build.yml        # Dry-run compilation test on push/PR
+├── charts/
+│   └── moodle/                   # Helm chart (see charts/moodle/README.md)
+│       ├── templates/
+│       ├── Chart.yaml
+│       └── values.yaml
 ├── base/                         # Base configuration templates
 │   ├── etc/
 │   │   ├── nginx/
