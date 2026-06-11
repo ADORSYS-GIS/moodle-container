@@ -1,0 +1,153 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Moodle Chart using bjw-s/common library
+# ─────────────────────────────────────────────────────────────────────────────
+
+global:
+  nameOverride: ""
+  fullnameOverride: ""
+
+# Custom values used by our secret templates
+moodle:
+  password: ""
+  existingSecret: ""
+
+externalDatabase:
+  password: ""
+  existingSecret: ""
+
+externalRedis:
+  password: ""
+  existingSecret: ""
+
+# ─────────────────────────────────────────────────────────────────────────────
+# bjw-s/common configuration
+# ─────────────────────────────────────────────────────────────────────────────
+
+controllers:
+  main:
+    type: deployment
+    replicas: 1
+    
+    # Pod-level annotations and labels can be added here if needed
+    annotations: {}
+    labels: {}
+    
+    containers:
+      main:
+        image:
+          repository: ghcr.io/adorsys-gis/moodle-container
+          tag: "latest"
+          pullPolicy: IfNotPresent
+        
+        env:
+          # Moodle site settings
+          SITE_URL: "http://moodle.local"
+          MOODLE_LANGUAGE: "en"
+          MOODLE_SITENAME: "Moodle"
+          MOODLE_SITESUMMARY: "Moodle LMS running on Kubernetes"
+          MOODLE_USERNAME: "admin"
+          MOODLE_EMAIL: "admin@moodle.local"
+          ENABLE_FRESHCLAM: "no"
+          ENABLE_MOOSH_BOOTSTRAP: "no"
+          ENABLE_OBJECTFS: "no"
+          
+          # Database settings
+          DB_TYPE: "mariadb"
+          DB_HOST: ""
+          DB_HOST_PORT: "3306"
+          DB_NAME: "moodle"
+          DB_USER: "moodle_user"
+          DB_PREFIX: "mdl_"
+          
+          # Redis settings
+          REDIS_SESSION_ID_HOST: ""
+          REDIS_SESSION_ID_PORT: "6379"
+          REDIS_SESSION_IP_AND_PORT: ""
+          REDIS_APP_IP_AND_PORT: ""
+          REDIS_LOCK_HOST_AND_PORT: ""
+
+          # Secrets integration (maps to our custom secret generation templates)
+          MOODLE_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-moodle" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.moodle.existingSecret }}'
+                key: moodle-password
+          DB_PASS:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externaldb" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalDatabase.existingSecret }}'
+                key: db-password
+          REDIS_SESSION_ID_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: redis-password
+          REDIS_SESSION_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: redis-password
+          REDIS_APP_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: redis-password
+          REDIS_LOCK_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: redis-password
+
+        probes:
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /login/index.php
+            spec:
+              initialDelaySeconds: 600
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 6
+              successThreshold: 1
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /login/index.php
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 6
+              successThreshold: 1
+              
+        resources: {}
+
+service:
+  main:
+    controller: main
+    type: ClusterIP
+    ports:
+      http:
+        port: 8080
+
+ingress:
+  main:
+    enabled: false
+    className: ""
+    hosts:
+      - host: moodle.local
+        paths:
+          - path: /
+            pathType: Prefix
+            service:
+              identifier: main
+              port: http
+
+persistence:
+  moodledata:
+    enabled: true
+    type: persistentVolumeClaim
+    accessMode: ReadWriteOnce
+    size: 8Gi
+    globalMounts:
+      - path: /moodleroot/moodledata
