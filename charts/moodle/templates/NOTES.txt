@@ -11,22 +11,22 @@ CHART DEPLOYED: {{ include "bjw-s.common.lib.chart.names.fullname" . }}
 {{- end }}
 
 === 2. Admin Credentials ===
-  Username: {{ .Values.controllers.main.containers.main.env.MOODLE_USERNAME }}
+  Username: {{ .Values.moodle.username }}
   Password:
     kubectl get secret --namespace {{ .Release.Namespace }} \
       {{ default (printf "%s-moodle" (include "bjw-s.common.lib.chart.names.fullname" .)) .Values.moodle.existingSecret }} \
       -o jsonpath="{.data.moodle-password}" | base64 --decode; echo
 
 === 3. External Database ===
-  Host    : {{ .Values.controllers.main.containers.main.env.DB_HOST }}
-  Database: {{ .Values.controllers.main.containers.main.env.DB_NAME }}
-  User    : {{ .Values.controllers.main.containers.main.env.DB_USER }}
+  Host    : {{ .Values.externalDatabase.host }}
+  Database: {{ .Values.externalDatabase.database }}
+  User    : {{ .Values.externalDatabase.user }}
   Password:
     kubectl get secret --namespace {{ .Release.Namespace }} {{ default (printf "%s-externaldb" (include "bjw-s.common.lib.chart.names.fullname" .)) .Values.externalDatabase.existingSecret }} \
-      -o jsonpath="{.data.db-password}" | base64 --decode; echo
+      -o jsonpath="{.data.{{ .Values.externalDatabase.existingSecretPasswordKey | default "db-password" }}}" | base64 --decode; echo
 
 === 4. External Redis ===
-  Host: {{ .Values.controllers.main.containers.main.env.REDIS_SESSION_ID_HOST }}
+  Host: {{ .Values.externalRedis.host }}
   Password:
     kubectl get secret --namespace {{ .Release.Namespace }} {{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" .)) .Values.externalRedis.existingSecret }} \
-      -o jsonpath="{.data.redis-password}" | base64 --decode; echo
+      -o jsonpath="{.data.{{ .Values.externalRedis.existingSecretPasswordKey | default "redis-password" }}}" | base64 --decode; echo

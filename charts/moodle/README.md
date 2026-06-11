@@ -4,7 +4,7 @@ A Helm chart for deploying [adorsys-gis/moodle-container](https://github.com/ADO
 
 ## Prerequisites
 
-- Kubernetes 1.22+
+- Kubernetes 1.28+
 - Helm 3.8+
 - An external MariaDB/MySQL database
 - An external Redis instance
@@ -25,36 +25,34 @@ The chart uses the [bjw-s/common](https://github.com/bjw-s/helm-charts/tree/main
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `controllers.main.containers.main.env.SITE_URL` | `http://moodle.local` | Public URL of the Moodle site |
-| `controllers.main.containers.main.env.MOODLE_LANGUAGE` | `en` | Default language |
-| `controllers.main.containers.main.env.MOODLE_SITENAME` | `Moodle` | Site full name |
-| `controllers.main.containers.main.env.MOODLE_SITESUMMARY` | `Moodle LMS running on Kubernetes` | Site summary |
-| `controllers.main.containers.main.env.MOODLE_USERNAME` | `admin` | Admin username |
-| `controllers.main.containers.main.env.MOODLE_EMAIL` | `admin@moodle.local` | Admin email |
-| `controllers.main.containers.main.env.ENABLE_FRESHCLAM` | `no` | Enable ClamAV scanning |
-| `controllers.main.containers.main.env.ENABLE_MOOSH_BOOTSTRAP` | `no` | Enable Moosh CLI bootstrap |
-| `controllers.main.containers.main.env.ENABLE_OBJECTFS` | `no` | Enable ObjectFS plugin |
+| `moodle.siteUrl` | `http://moodle.local` | Public URL of the Moodle site |
+| `moodle.language` | `en` | Default language |
+| `moodle.siteName` | `Moodle` | Site full name |
+| `moodle.siteSummary` | `Moodle LMS running on Kubernetes` | Site summary |
+| `moodle.username` | `admin` | Admin username |
+| `moodle.email` | `admin@moodle.local` | Admin email |
+| `moodle.enableFreshclam` | `no` | Enable ClamAV scanning |
+| `moodle.enableMooshBootstrap` | `no` | Enable Moosh CLI bootstrap |
+| `moodle.enableObjectfs` | `no` | Enable ObjectFS plugin |
 
 ### Database
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `controllers.main.containers.main.env.DB_TYPE` | `mariadb` | Database driver |
-| `controllers.main.containers.main.env.DB_HOST` | `""` | Database host (required) |
-| `controllers.main.containers.main.env.DB_HOST_PORT` | `3306` | Database port |
-| `controllers.main.containers.main.env.DB_NAME` | `moodle` | Database name |
-| `controllers.main.containers.main.env.DB_USER` | `moodle_user` | Database user |
-| `controllers.main.containers.main.env.DB_PREFIX` | `mdl_` | Table prefix |
+| `externalDatabase.type` | `mariadb` | Database driver |
+| `externalDatabase.host` | `""` | Database host (required) |
+| `externalDatabase.port` | `3306` | Database port |
+| `externalDatabase.database` | `moodle` | Database name |
+| `externalDatabase.user` | `moodle_user` | Database user |
+| `externalDatabase.existingSecretPasswordKey` | `db-password` | Key inside the secret containing the password |
 
 ### Redis
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `controllers.main.containers.main.env.REDIS_SESSION_ID_HOST` | `""` | Redis session host |
-| `controllers.main.containers.main.env.REDIS_SESSION_ID_PORT` | `6379` | Redis session port |
-| `controllers.main.containers.main.env.REDIS_SESSION_IP_AND_PORT` | `""` | Redis session host:port |
-| `controllers.main.containers.main.env.REDIS_APP_IP_AND_PORT` | `""` | Redis application cache host:port |
-| `controllers.main.containers.main.env.REDIS_LOCK_HOST_AND_PORT` | `""` | Redis lock factory host:port |
+| `externalRedis.host` | `""` | Redis host |
+| `externalRedis.port` | `6379` | Redis port |
+| `externalRedis.existingSecretPasswordKey` | `redis-password` | Key inside the secret containing the password |
 
 ### Secrets
 
@@ -91,11 +89,8 @@ The chart auto-generates Kubernetes Secrets for passwords if no `existingSecret`
 
 ```bash
 helm install my-moodle moodle/moodle \
-  --set controllers.main.containers.main.env.DB_HOST=mariadb.mariadb.svc.cluster.local \
-  --set controllers.main.containers.main.env.REDIS_SESSION_ID_HOST=redis.redis.svc.cluster.local \
-  --set controllers.main.containers.main.env.REDIS_SESSION_IP_AND_PORT=redis.redis.svc.cluster.local:6379 \
-  --set controllers.main.containers.main.env.REDIS_APP_IP_AND_PORT=redis.redis.svc.cluster.local:6379 \
-  --set controllers.main.containers.main.env.REDIS_LOCK_HOST_AND_PORT=redis.redis.svc.cluster.local:6379
+  --set externalDatabase.host=mariadb.mariadb.svc.cluster.local \
+  --set externalRedis.host=redis.redis.svc.cluster.local
 ```
 
 ### With existing Secrets
@@ -105,7 +100,8 @@ helm install my-moodle moodle/moodle \
   --set moodle.existingSecret=my-moodle-secret \
   --set externalDatabase.existingSecret=my-db-secret \
   --set externalRedis.existingSecret=my-redis-secret \
-  --set controllers.main.containers.main.env.DB_HOST=mariadb.mariadb.svc.cluster.local \
+  --set externalDatabase.host=mariadb.mariadb.svc.cluster.local \
+  --set externalRedis.host=redis.redis.svc.cluster.local \
   --set ingress.main.enabled=true \
   --set ingress.main.hosts[0].host=moodle.example.com
 ```
@@ -115,8 +111,9 @@ helm install my-moodle moodle/moodle \
 ```bash
 helm install my-moodle moodle/moodle \
   --set controllers.main.containers.main.image.tag=4.5 \
-  --set controllers.main.containers.main.env.SITE_URL=https://moodle.example.com \
-  --set controllers.main.containers.main.env.DB_HOST=mariadb.mariadb.svc.cluster.local \
+  --set moodle.siteUrl=https://moodle.example.com \
+  --set externalDatabase.host=mariadb.mariadb.svc.cluster.local \
+  --set externalRedis.host=redis.redis.svc.cluster.local \
   --set ingress.main.enabled=true \
   --set ingress.main.className=nginx \
   --set ingress.main.hosts[0].host=moodle.example.com \
