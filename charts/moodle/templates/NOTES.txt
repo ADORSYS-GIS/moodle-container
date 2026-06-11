@@ -1,0 +1,32 @@
+CHART DEPLOYED: {{ include "bjw-s.common.lib.chart.names.fullname" . }}
+
+** Please be patient while the chart is being deployed **
+
+=== 1. Access Moodle ===
+{{- if .Values.ingress.main.enabled }}
+  URL: http{{ if .Values.ingress.main.tls }}s{{ end }}://{{ (index .Values.ingress.main.hosts 0).host }}
+{{- else }}
+  kubectl --namespace {{ .Release.Namespace }} port-forward svc/{{ include "bjw-s.common.lib.chart.names.fullname" . }} 8080:{{ .Values.service.main.ports.http.port }}
+  echo "Moodle URL: http://127.0.0.1:8080"
+{{- end }}
+
+=== 2. Admin Credentials ===
+  Username: {{ .Values.controllers.main.containers.main.env.MOODLE_USERNAME }}
+  Password:
+    kubectl get secret --namespace {{ .Release.Namespace }} \
+      {{ default (printf "%s-moodle" (include "bjw-s.common.lib.chart.names.fullname" .)) .Values.moodle.existingSecret }} \
+      -o jsonpath="{.data.moodle-password}" | base64 --decode; echo
+
+=== 3. External Database ===
+  Host    : {{ .Values.controllers.main.containers.main.env.DB_HOST }}
+  Database: {{ .Values.controllers.main.containers.main.env.DB_NAME }}
+  User    : {{ .Values.controllers.main.containers.main.env.DB_USER }}
+  Password:
+    kubectl get secret --namespace {{ .Release.Namespace }} {{ default (printf "%s-externaldb" (include "bjw-s.common.lib.chart.names.fullname" .)) .Values.externalDatabase.existingSecret }} \
+      -o jsonpath="{.data.db-password}" | base64 --decode; echo
+
+=== 4. External Redis ===
+  Host: {{ .Values.controllers.main.containers.main.env.REDIS_SESSION_ID_HOST }}
+  Password:
+    kubectl get secret --namespace {{ .Release.Namespace }} {{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" .)) .Values.externalRedis.existingSecret }} \
+      -o jsonpath="{.data.redis-password}" | base64 --decode; echo
