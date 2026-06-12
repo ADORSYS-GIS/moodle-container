@@ -3,6 +3,29 @@ entries:
   moodle:
   - apiVersion: v2
     appVersion: latest
+    created: "2026-06-12T10:06:32.064313884Z"
+    dependencies:
+    - name: common
+      repository: https://bjw-s-labs.github.io/helm-charts/
+      version: 5.0.1
+    description: 'A Helm chart for deploying adorsys-gis/moodle-container with external
+      database and Redis services. '
+    digest: dca04d5e796ac718a33aa80e73028f711fa87b762f88213ad0b5bb1cee0220c2
+    home: https://github.com/adorsys-gis/moodle-container
+    keywords:
+    - moodle
+    - lms
+    maintainers:
+    - name: adorsys-gis
+    name: moodle
+    sources:
+    - https://github.com/adorsys-gis/moodle-container
+    type: application
+    urls:
+    - https://github.com/ADORSYS-GIS/moodle-container/releases/download/moodle-0.4.0/moodle-0.4.0.tgz
+    version: 0.4.0
+  - apiVersion: v2
+    appVersion: latest
     created: "2026-06-12T08:09:04.514964171Z"
     dependencies:
     - name: common
@@ -70,4 +93,4 @@ entries:
     urls:
     - https://github.com/ADORSYS-GIS/moodle-container/releases/download/moodle-0.1.0/moodle-0.1.0.tgz
     version: 0.1.0
-generated: "2026-06-12T08:09:04.514976169Z"
+generated: "2026-06-12T10:06:32.064355152Z"
