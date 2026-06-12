@@ -22,6 +22,20 @@ moodle:
   enableFreshclam: "no"
   enableMooshBootstrap: "no"
   enableObjectfs: "no"
+  sslproxy: "false"
+  noEmailEver: "false"
+
+smtp:
+  host: ""
+  port: "587"
+  user: ""
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: "smtp-password"
+  protocol: "tls"
+  noreplyAddress: "noreply@moodle.local"
+  mailPrefix: "[Moodle]"
+
 
 externalDatabase:
   type: "mariadb"
@@ -32,6 +46,16 @@ externalDatabase:
   password: ""
   existingSecret: ""
   existingSecretPasswordKey: "db-password"
+  prefix: "mdl_"
+  
+  readReplica:
+    host: ""
+    port: 3306
+    user: ""
+    password: ""
+    existingSecret: ""
+    existingSecretPasswordKey: "db-replica-password"
+
 
 externalRedis:
   host: ""
@@ -71,14 +95,27 @@ controllers:
           ENABLE_FRESHCLAM: '{{ .Values.moodle.enableFreshclam }}'
           ENABLE_MOOSH_BOOTSTRAP: '{{ .Values.moodle.enableMooshBootstrap }}'
           ENABLE_OBJECTFS: '{{ .Values.moodle.enableObjectfs }}'
+          SSLPROXY: '{{ .Values.moodle.sslproxy }}'
+          NOEMAIL_EVER: '{{ .Values.moodle.noEmailEver }}'
           
+          # SMTP settings
+          SMTP_HOST: '{{ .Values.smtp.host }}'
+          SMTP_PORT: '{{ .Values.smtp.port }}'
+          SMTP_USER: '{{ .Values.smtp.user }}'
+          SMTP_PROTOCOL: '{{ .Values.smtp.protocol }}'
+          MOODLE_MAIL_NOREPLY_ADDRESS: '{{ .Values.smtp.noreplyAddress }}'
+          MOODLE_MAIL_PREFIX: '{{ .Values.smtp.mailPrefix }}'
+
           # Database settings mapped from above
           DB_TYPE: '{{ .Values.externalDatabase.type }}'
           DB_HOST: '{{ .Values.externalDatabase.host }}'
           DB_HOST_PORT: '{{ .Values.externalDatabase.port }}'
           DB_NAME: '{{ .Values.externalDatabase.database }}'
           DB_USER: '{{ .Values.externalDatabase.user }}'
-          DB_PREFIX: "mdl_"
+          DB_PREFIX: '{{ .Values.externalDatabase.prefix }}'
+          DB_READ_REPLICA_HOST: '{{ .Values.externalDatabase.readReplica.host }}'
+          DB_READ_REPLICA_PORT: '{{ .Values.externalDatabase.readReplica.port }}'
+          DB_READ_REPLICA_USER: '{{ .Values.externalDatabase.readReplica.user }}'
           
           # Redis settings mapped from above
           REDIS_SESSION_ID_HOST: '{{ .Values.externalRedis.host }}'
@@ -98,6 +135,16 @@ controllers:
               secretKeyRef:
                 name: '{{ default (printf "%s-externaldb" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalDatabase.existingSecret }}'
                 key: '{{ $.Values.externalDatabase.existingSecretPasswordKey | default "db-password" }}'
+          DB_READ_REPLICA_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externaldb" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalDatabase.readReplica.existingSecret }}'
+                key: '{{ $.Values.externalDatabase.readReplica.existingSecretPasswordKey | default "db-replica-password" }}'
+          SMTP_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-moodle" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.smtp.existingSecret }}'
+                key: '{{ $.Values.smtp.existingSecretPasswordKey | default "smtp-password" }}'
           REDIS_SESSION_ID_AUTH_STRING:
             valueFrom:
               secretKeyRef:

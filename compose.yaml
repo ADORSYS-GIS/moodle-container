@@ -30,6 +30,19 @@ services:
       ENABLE_FRESHCLAM: "no"
       ENABLE_MOOSH_BOOTSTRAP: "no"
       ENABLE_OBJECTFS: "yes"
+      SSLPROXY: "false"
+      NOEMAIL_EVER: "false"
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      SMTP_USER: ""
+      SMTP_PASSWORD: ""
+      SMTP_PROTOCOL: "tls"
+      MOODLE_MAIL_NOREPLY_ADDRESS: "noreply@local.moodle"
+      MOODLE_MAIL_PREFIX: "[Moodle]"
+      DB_READ_REPLICA_HOST: ""
+      DB_READ_REPLICA_PORT: "3306"
+      DB_READ_REPLICA_USER: ""
+      DB_READ_REPLICA_PASSWORD: ""
     entrypoint:
       - /opt/setup_moodle.sh
     volumes:
