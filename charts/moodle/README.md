@@ -34,6 +34,20 @@ The chart uses the [bjw-s/common](https://github.com/bjw-s/helm-charts/tree/main
 | `moodle.enableFreshclam` | `no` | Enable ClamAV scanning |
 | `moodle.enableMooshBootstrap` | `no` | Enable Moosh CLI bootstrap |
 | `moodle.enableObjectfs` | `no` | Enable ObjectFS plugin |
+| `moodle.sslproxy` | `false` | Enable SSL Proxy (for reverse proxies) |
+| `moodle.noEmailEver` | `false` | Completely disable Moodle emails |
+
+### SMTP Settings
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `smtp.host` | `""` | SMTP Host |
+| `smtp.port` | `587` | SMTP Port |
+| `smtp.user` | `""` | SMTP Username |
+| `smtp.protocol` | `tls` | SMTP Protocol (`tls`, `ssl`, etc.) |
+| `smtp.noreplyAddress` | `noreply@moodle.local` | Moodle No-Reply address |
+| `smtp.mailPrefix` | `[Moodle]` | Mail subject prefix |
+| `smtp.existingSecretPasswordKey` | `smtp-password` | Secret key for SMTP password |
 
 ### Database
 
@@ -44,7 +58,12 @@ The chart uses the [bjw-s/common](https://github.com/bjw-s/helm-charts/tree/main
 | `externalDatabase.port` | `3306` | Database port |
 | `externalDatabase.database` | `moodle` | Database name |
 | `externalDatabase.user` | `moodle_user` | Database user |
+| `externalDatabase.prefix` | `mdl_` | Database tables prefix |
 | `externalDatabase.existingSecretPasswordKey` | `db-password` | Key inside the secret containing the password |
+| `externalDatabase.readReplica.host` | `""` | Database read replica host |
+| `externalDatabase.readReplica.port` | `3306` | Database read replica port |
+| `externalDatabase.readReplica.user` | `""` | Database read replica user |
+| `externalDatabase.readReplica.existingSecretPasswordKey` | `db-replica-password` | Key inside the secret containing the read replica password |
 
 ### Redis
 
@@ -62,8 +81,12 @@ The chart auto-generates Kubernetes Secrets for passwords if no `existingSecret`
 |--------------|-----------|-------------|
 | `moodle.password` | `moodle-password` | Moodle admin password |
 | `moodle.existingSecret` | — | Use an existing Secret instead of auto-generated |
+| `smtp.password` | `smtp-password` | SMTP server password |
+| `smtp.existingSecret` | — | Use an existing Secret instead of auto-generated |
 | `externalDatabase.password` | `db-password` | Database password |
 | `externalDatabase.existingSecret` | — | Use an existing Secret instead of auto-generated |
+| `externalDatabase.readReplica.password` | `db-replica-password` | Database read replica password |
+| `externalDatabase.readReplica.existingSecret` | — | Use an existing Secret instead of auto-generated |
 | `externalRedis.password` | `redis-password` | Redis password |
 | `externalRedis.existingSecret` | — | Use an existing Secret instead of auto-generated |
 
