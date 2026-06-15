@@ -162,7 +162,7 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
     generate_config_php
 
     echo "Installing database ..."
-    sudo -u www php82 -d max_input_vars=10000 \
+    db_install_output=$(sudo -u www php82 -d max_input_vars=10000 \
       $MOODLE_PATH/admin/cli/install_database.php \
       --lang="$MOODLE_LANGUAGE" \
       --fullname="$MOODLE_SITENAME" \
@@ -171,8 +171,22 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
       --adminuser="$MOODLE_USERNAME" \
       --adminpass="$MOODLE_PASSWORD" \
       --adminemail="$MOODLE_EMAIL" \
-      --agree-license
-    echo "Done installing database ..."
+      --agree-license 2>&1) || db_install_failed=true
+
+    if [ "${db_install_failed:-}" = "true" ]; then
+      if echo "$db_install_output" | grep -qi "already present"; then
+        echo "Database tables already present — running upgrade instead ..."
+        sudo -u www php82 -d max_input_vars=10000 \
+          $MOODLE_PATH/admin/cli/upgrade.php --non-interactive --allow-unstable
+      else
+        echo "$db_install_output"
+        echo "Database installation failed."
+        exit 1
+      fi
+    else
+      echo "$db_install_output"
+      echo "Done installing database ..."
+    fi
 
     apply_config_php_customizations
 
