@@ -80,8 +80,8 @@ controllers:
     containers:
       main:
         image:
-          repository: ghcr.io/adorsys-gis/moodle-container
-          tag: "latest"
+          repository: ghcr.io/adorsys-gis/moodle-nginx
+          tag: "5.0-r65ef831"
           pullPolicy: IfNotPresent
         
         env:
