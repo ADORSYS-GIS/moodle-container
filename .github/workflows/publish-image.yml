@@ -2,12 +2,6 @@ name: Build and Publish Moodle Nginx Image
 
 on:
   workflow_dispatch:
-    inputs:
-      push_latest:
-        description: 'Also tag and push as latest'
-        type: boolean
-        required: true
-        default: true
 
 jobs:
   build-and-push:
@@ -34,49 +28,50 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Downcase repository info
+      - name: Downcase repository owner
         id: repo_info
-        run: |
-          echo "owner=${OWNER,,}" >> "$GITHUB_OUTPUT"
-          echo "repo=${REPO,,}" >> "$GITHUB_OUTPUT"
+        run: echo "owner=${OWNER,,}" >> "$GITHUB_OUTPUT"
         env:
           OWNER: ${{ github.repository_owner }}
-          REPO: ${{ github.event.repository.name }}
+
+      - name: Extract short commit SHA
+        id: commit
+        run: echo "short=$(echo ${{ github.sha }} | cut -c1-7)" >> "$GITHUB_OUTPUT"
 
       - name: Extract Moodle Version from Dockerfile
         id: extractor
         run: |
-          # Find the line containing MOODLE_BUILD_URL in Dockerfile
           BUILD_URL=$(grep 'MOODLE_BUILD_URL=' Dockerfile | sed -E "s/.*MOODLE_BUILD_URL='([^']+)'.*/\1/")
           echo "Found MOODLE_BUILD_URL in Dockerfile: $BUILD_URL"
-          
-          # Extract the archive filename
+
           FILENAME=$(basename "$BUILD_URL")
-          
-          # Check if the filename follows standard latest-XYZ or version-specific formats
-          if [[ "$FILENAME" =~ moodle-latest-([0-9]+)\.tgz ]]; then
+
+          if [[ "$FILENAME" =~ moodle-([0-9]+\.[0-9]+\.[0-9]+)\.tgz ]]; then
+            TAG="${BASH_REMATCH[1]}"
+          elif [[ "$FILENAME" =~ moodle-latest-([0-9]+)\.tgz ]]; then
             BRANCH="${BASH_REMATCH[1]}"
             MAJOR="${BRANCH:0:1}"
             MINOR=$(echo "${BRANCH:1}" | sed 's/^0//')
             [ -z "$MINOR" ] && MINOR="0"
             TAG="${MAJOR}.${MINOR}"
-          elif [[ "$FILENAME" =~ moodle-([0-9]+\.[0-9]+\.[0-9]+)\.tgz ]]; then
-            TAG="${BASH_REMATCH[1]}"
           else
             TAG=$(echo "$FILENAME" | sed -E 's/moodle-(.*)\.tgz/\1/')
           fi
-          
+
           echo "Extracted Moodle Version Tag: $TAG"
           echo "version_tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "major_minor=$(echo "$TAG" | sed -E 's/^([0-9]+\.[0-9]+).*/\1/')" >> "$GITHUB_OUTPUT"
 
       - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/${{ steps.repo_info.outputs.owner }}/${{ steps.repo_info.outputs.repo }}
+          images: ghcr.io/${{ steps.repo_info.outputs.owner }}/moodle-nginx
           tags: |
+            type=raw,value=${{ steps.extractor.outputs.version_tag }}-r${{ steps.commit.outputs.short }}
             type=raw,value=${{ steps.extractor.outputs.version_tag }}
-            type=raw,value=latest,enable=${{ github.event.inputs.push_latest == 'true' }}
+            type=raw,value=${{ steps.extractor.outputs.major_minor }}
+            type=raw,value=latest
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
