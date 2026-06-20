@@ -83,7 +83,7 @@ controllers:
       main:
         image:
           repository: ghcr.io/adorsys-gis/moodle-nginx
-          tag: "5.0-r65ef831"
+          tag: "5.2-r6a32c64"
           pullPolicy: IfNotPresent
 
         env:
