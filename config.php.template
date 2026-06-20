@@ -1,4 +1,8 @@
 
+// Disable plugin installation/upgrade from the web interface.
+// All plugins must be pre-installed in the Docker image.
+$CFG->disableupdateautodeploy = true;
+
 $CFG->localcachedir = '/tmp/moodle/localcache';
 
 // $CFG->lock_factory = '\\local_redislock\\lock\\redis_lock_factory';
@@ -27,7 +31,17 @@ $CFG->session_redis_compressor = 'gzip';             // Optional, possible value
                                                      // 'zstd' - PHP Zstandard compression
 
 $CFG->xsendfile = "X-Accel-Redirect";
-$CFG->xsendfilealiases = array(
+$CFG->xsendfile_aliases = array(
     "/dataroot/" => $CFG->dataroot,
     "/localcachedir/" => $CFG->localcachedir
 );
+
+// Override cURL security only if explicitly set (for local Docker Compose testing).
+// In production (Helm/K8s) with publicly accessible services, leave these unset
+// to use Moodle's secure defaults, which block SSRF to private networks.
+if (getenv('CURL_SECURITY_BLOCKED_HOSTS')) {
+    $CFG->curlsecurityblockedhosts = getenv('CURL_SECURITY_BLOCKED_HOSTS');
+}
+if (getenv('CURL_SECURITY_ALLOWED_PORTS')) {
+    $CFG->curlsecurityallowedport = getenv('CURL_SECURITY_ALLOWED_PORTS');
+}

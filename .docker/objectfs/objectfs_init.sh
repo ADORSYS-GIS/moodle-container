@@ -2,9 +2,9 @@
 set -eu
 
 if [ -f "${MOODLE_PATH}/config.php" ] && [ -d "${MOODLE_PATH}/admin/tool/objectfs" ]; then
-  if ! grep -q "alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system'" "${MOODLE_PATH}/config.php"; then
-    echo "Injecting ObjectFS alternative file system into config.php ..."
-    sed -i "/require_once/i \$CFG->alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system';" "${MOODLE_PATH}/config.php"
+  if ! grep -q "alternative_file_system_class" "${MOODLE_PATH}/config.php"; then
+    echo "Injecting ObjectFS alternative file system into config.php (conditional on plugin availability) ..."
+    sed -i "/require_once/i if (is_dir('${MOODLE_PATH}/admin/tool/objectfs/classes')) { \$CFG->alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system'; }" "${MOODLE_PATH}/config.php"
   else
     echo "ObjectFS alternative file system already present in config.php ..."
   fi
@@ -29,6 +29,10 @@ sudo -u www php82 -d max_input_vars=10000 \
   "${MOODLE_PATH}/admin/cli/upgrade.php" \
   --non-interactive \
   --allow-unstable
+
+echo "Purging caches to refresh plugin state ..."
+sudo -u www php82 -d max_input_vars=10000 \
+  "${MOODLE_PATH}/admin/cli/purge_caches.php"
 
 echo "Applying tool_objectfs settings for MinIO ..."
 php82 /scripts/configure_objectfs.php

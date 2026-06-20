@@ -208,6 +208,13 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
     sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtpsecure --set="$SMTP_PROTOCOL"
     sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=noreplyaddress --set="$MOODLE_MAIL_NOREPLY_ADDRESS"
     sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=emailsubjectprefix --set="$MOODLE_MAIL_PREFIX"
+
+    if [ -n "${CURL_SECURITY_BLOCKED_HOSTS:-}" ]; then
+      sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=curlsecurityblockedhosts --set="$CURL_SECURITY_BLOCKED_HOSTS"
+    fi
+    if [ -n "${CURL_SECURITY_ALLOWED_PORTS:-}" ]; then
+      sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=curlsecurityallowedport --set="$CURL_SECURITY_ALLOWED_PORTS"
+    fi
     # redis session cookies
     # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_handler_class" --set='\core\session\redis'
     # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_database" --set=0
@@ -270,10 +277,7 @@ else
   fi
 fi
 
-echo "Adding cron entries for Moodle's cron and AdHoc Tasks ..."
-echo "*/1 * * * * /usr/bin/sudo -u www /usr/bin/php82 $MOODLE_PATH/admin/cli/cron.php >> $MOODLE_DATAROOT_PATH/log/moodle_cron.log 2>&1" > /var/spool/cron/crontabs/root
-echo "*/1 * * * * /usr/bin/sudo -u www /usr/bin/php82 $MOODLE_PATH/admin/cli/adhoc_task.php --execute >> $MOODLE_DATAROOT_PATH/log/moodle_task.log 2>&1" >> /var/spool/cron/crontabs/root
-echo "0 0 * * * /usr/bin/freshclam >> $MOODLE_DATAROOT_PATH/log/freshclam.log 2>&1" >> /var/spool/cron/crontabs/root
+echo "Cron is handled by a dedicated Kubernetes CronJob. Skipping in-container cron setup ..."
 
 if [ "${ENABLE_MOOSH_BOOTSTRAP:-no}" != "yes" ]; then
   echo "Skipping optional Moosh/bootstrap extras in local Docker setup ..."

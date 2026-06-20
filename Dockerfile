@@ -15,7 +15,7 @@ FROM alpine:3.19.1
 
 USER root
 
-RUN apk update && apk add --no-cache tar curl gzip nginx php82 php82-fpm php82-opcache \
+RUN apk update && apk add --no-cache tar curl gzip unzip nginx php82 php82-fpm php82-opcache \
   php82-mysqli php82-iconv php82-mbstring php82-curl php82-openssl php82-tokenizer php82-intl \
   php82-soap php82-xmlreader php82-fileinfo php82-sodium php82-exif php82-ctype php82-zip \
   php82-xmlwriter php82-gd php82-simplexml php82-dom php82-xml php82-redis php82-pecl-igbinary \
@@ -74,6 +74,7 @@ ENV MOODLE_URL='' \
     SMTP_PROTOCOL='' \
     MOODLE_MAIL_NOREPLY_ADDRESS='' \
     MOODLE_MAIL_PREFIX=''
+    
 
 COPY ["./base/opt", "/opt"]
 

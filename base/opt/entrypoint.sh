@@ -15,7 +15,6 @@
 
 . /opt/setup_moodle.sh
 
-/usr/sbin/crond
 /usr/sbin/php-fpm82
 /usr/sbin/nginx -g 'daemon off;'
 

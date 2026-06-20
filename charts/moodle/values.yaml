@@ -21,9 +21,12 @@ moodle:
   existingSecret: ""
   enableFreshclam: "no"
   enableMooshBootstrap: "no"
-  enableObjectfs: "no"
   sslproxy: "false"
   noEmailEver: "false"
+
+  curlSecurity:
+    blockedHosts: ""
+    allowedPorts: ""
 
 smtp:
   host: ""
@@ -36,7 +39,6 @@ smtp:
   noreplyAddress: "noreply@moodle.local"
   mailPrefix: "[Moodle]"
 
-
 externalDatabase:
   type: "mariadb"
   host: ""
@@ -47,7 +49,7 @@ externalDatabase:
   existingSecret: ""
   existingSecretPasswordKey: "db-password"
   prefix: "mdl_"
-  
+
   readReplica:
     host: ""
     port: 3306
@@ -56,7 +58,6 @@ externalDatabase:
     existingSecret: ""
     existingSecretPasswordKey: "db-replica-password"
 
-
 externalRedis:
   host: ""
   port: 6379
@@ -64,28 +65,29 @@ externalRedis:
   existingSecret: ""
   existingSecretPasswordKey: "redis-password"
 
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # bjw-s/common configuration
 # ─────────────────────────────────────────────────────────────────────────────
 
 controllers:
   main:
-    type: deployment
-    replicas: 1
-    
-    # Pod-level annotations and labels can be added here if needed
+    type: statefulset
+    replicas: 2
+
     annotations: {}
     labels: {}
-    
+
     containers:
       main:
         image:
           repository: ghcr.io/adorsys-gis/moodle-nginx
           tag: "5.0-r65ef831"
           pullPolicy: IfNotPresent
-        
+
         env:
-          # Moodle site settings mapped from above
+          # Moodle site settings
           SITE_URL: '{{ .Values.moodle.siteUrl }}'
           MOODLE_LANGUAGE: '{{ .Values.moodle.language }}'
           MOODLE_SITENAME: '{{ .Values.moodle.siteName }}'
@@ -94,10 +96,11 @@ controllers:
           MOODLE_EMAIL: '{{ .Values.moodle.email }}'
           ENABLE_FRESHCLAM: '{{ .Values.moodle.enableFreshclam }}'
           ENABLE_MOOSH_BOOTSTRAP: '{{ .Values.moodle.enableMooshBootstrap }}'
-          ENABLE_OBJECTFS: '{{ .Values.moodle.enableObjectfs }}'
           SSLPROXY: '{{ .Values.moodle.sslproxy }}'
           NOEMAIL_EVER: '{{ .Values.moodle.noEmailEver }}'
-          
+          CURL_SECURITY_BLOCKED_HOSTS: '{{ .Values.moodle.curlSecurity.blockedHosts }}'
+          CURL_SECURITY_ALLOWED_PORTS: '{{ .Values.moodle.curlSecurity.allowedPorts }}'
+
           # SMTP settings
           SMTP_HOST: '{{ .Values.smtp.host }}'
           SMTP_PORT: '{{ .Values.smtp.port }}'
@@ -106,7 +109,7 @@ controllers:
           MOODLE_MAIL_NOREPLY_ADDRESS: '{{ .Values.smtp.noreplyAddress }}'
           MOODLE_MAIL_PREFIX: '{{ .Values.smtp.mailPrefix }}'
 
-          # Database settings mapped from above
+          # Database settings
           DB_TYPE: '{{ .Values.externalDatabase.type }}'
           DB_HOST: '{{ .Values.externalDatabase.host }}'
           DB_HOST_PORT: '{{ .Values.externalDatabase.port }}'
@@ -116,15 +119,164 @@ controllers:
           DB_READ_REPLICA_HOST: '{{ .Values.externalDatabase.readReplica.host }}'
           DB_READ_REPLICA_PORT: '{{ .Values.externalDatabase.readReplica.port }}'
           DB_READ_REPLICA_USER: '{{ .Values.externalDatabase.readReplica.user }}'
-          
-          # Redis settings mapped from above
+
+          # Redis settings
           REDIS_SESSION_ID_HOST: '{{ .Values.externalRedis.host }}'
           REDIS_SESSION_ID_PORT: '{{ .Values.externalRedis.port }}'
           REDIS_SESSION_IP_AND_PORT: '{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}'
           REDIS_APP_IP_AND_PORT: '{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}'
           REDIS_LOCK_HOST_AND_PORT: '{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}'
 
-          # Secrets integration (maps to our custom secret generation templates or existing keys)
+          # Secrets
+          MOODLE_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-moodle" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.moodle.existingSecret }}'
+                key: moodle-password
+          DB_PASS:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externaldb" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalDatabase.existingSecret }}'
+                key: '{{ $.Values.externalDatabase.existingSecretPasswordKey | default "db-password" }}'
+          DB_READ_REPLICA_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externaldb" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalDatabase.readReplica.existingSecret }}'
+                key: '{{ $.Values.externalDatabase.readReplica.existingSecretPasswordKey | default "db-replica-password" }}'
+          SMTP_PASSWORD:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-moodle" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.smtp.existingSecret }}'
+                key: '{{ $.Values.smtp.existingSecretPasswordKey | default "smtp-password" }}'
+          REDIS_SESSION_ID_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: '{{ $.Values.externalRedis.existingSecretPasswordKey | default "redis-password" }}'
+          REDIS_SESSION_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: '{{ $.Values.externalRedis.existingSecretPasswordKey | default "redis-password" }}'
+          REDIS_APP_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: '{{ $.Values.externalRedis.existingSecretPasswordKey | default "redis-password" }}'
+          REDIS_LOCK_AUTH_STRING:
+            valueFrom:
+              secretKeyRef:
+                name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
+                key: '{{ $.Values.externalRedis.existingSecretPasswordKey | default "redis-password" }}'
+          
+
+        probes:
+          startup:
+            enabled: true
+            type: HTTP
+            path: /login/index.php
+            spec:
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              failureThreshold: 60
+          liveness:
+            enabled: true
+            type: HTTP
+            path: /login/index.php
+            spec:
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 6
+              successThreshold: 1
+          readiness:
+            enabled: true
+            type: HTTP
+            path: /login/index.php
+            spec:
+              initialDelaySeconds: 30
+              periodSeconds: 5
+              timeoutSeconds: 3
+              failureThreshold: 6
+              successThreshold: 1
+
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+
+    horizontalPodAutoscaler:
+      minReplicas: 2
+      maxReplicas: 3
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 70
+
+    podDisruptionBudget:
+      minAvailable: 1
+
+  cron:
+    type: cronjob
+    cronjob:
+      schedule: "*/1 * * * *"
+      concurrencyPolicy: Forbid
+      successfulJobsHistoryLimit: 3
+      failedJobsHistoryLimit: 3
+
+    containers:
+      cron:
+        image:
+          repository: ghcr.io/adorsys-gis/moodle-nginx
+          tag: "5.0-r65ef831"
+          pullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            . /opt/setup_moodle.sh && \
+            /usr/bin/php82 /moodleroot/moodle/admin/cli/cron.php
+
+        env:
+          SITE_URL: '{{ .Values.moodle.siteUrl }}'
+          MOODLE_LANGUAGE: '{{ .Values.moodle.language }}'
+          MOODLE_SITENAME: '{{ .Values.moodle.siteName }}'
+          MOODLE_SITESUMMARY: '{{ .Values.moodle.siteSummary }}'
+          MOODLE_USERNAME: '{{ .Values.moodle.username }}'
+          MOODLE_EMAIL: '{{ .Values.moodle.email }}'
+          ENABLE_FRESHCLAM: "no"
+          ENABLE_MOOSH_BOOTSTRAP: "no"
+          SSLPROXY: '{{ .Values.moodle.sslproxy }}'
+          NOEMAIL_EVER: '{{ .Values.moodle.noEmailEver }}'
+
+          SMTP_HOST: '{{ .Values.smtp.host }}'
+          SMTP_PORT: '{{ .Values.smtp.port }}'
+          SMTP_USER: '{{ .Values.smtp.user }}'
+          SMTP_PROTOCOL: '{{ .Values.smtp.protocol }}'
+          MOODLE_MAIL_NOREPLY_ADDRESS: '{{ .Values.smtp.noreplyAddress }}'
+          MOODLE_MAIL_PREFIX: '{{ .Values.smtp.mailPrefix }}'
+
+          DB_TYPE: '{{ .Values.externalDatabase.type }}'
+          DB_HOST: '{{ .Values.externalDatabase.host }}'
+          DB_HOST_PORT: '{{ .Values.externalDatabase.port }}'
+          DB_NAME: '{{ .Values.externalDatabase.database }}'
+          DB_USER: '{{ .Values.externalDatabase.user }}'
+          DB_PREFIX: '{{ .Values.externalDatabase.prefix }}'
+          DB_READ_REPLICA_HOST: '{{ .Values.externalDatabase.readReplica.host }}'
+          DB_READ_REPLICA_PORT: '{{ .Values.externalDatabase.readReplica.port }}'
+          DB_READ_REPLICA_USER: '{{ .Values.externalDatabase.readReplica.user }}'
+
+          REDIS_SESSION_ID_HOST: '{{ .Values.externalRedis.host }}'
+          REDIS_SESSION_ID_PORT: '{{ .Values.externalRedis.port }}'
+          REDIS_SESSION_IP_AND_PORT: '{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}'
+          REDIS_APP_IP_AND_PORT: '{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}'
+          REDIS_LOCK_HOST_AND_PORT: '{{ .Values.externalRedis.host }}:{{ .Values.externalRedis.port }}'
+
           MOODLE_PASSWORD:
             valueFrom:
               secretKeyRef:
@@ -166,29 +318,16 @@ controllers:
                 name: '{{ default (printf "%s-externalredis" (include "bjw-s.common.lib.chart.names.fullname" $)) $.Values.externalRedis.existingSecret }}'
                 key: '{{ $.Values.externalRedis.existingSecretPasswordKey | default "redis-password" }}'
 
-        probes:
-          liveness:
-            enabled: true
-            type: HTTP
-            path: /login/index.php
-            spec:
-              initialDelaySeconds: 600
-              periodSeconds: 10
-              timeoutSeconds: 5
-              failureThreshold: 6
-              successThreshold: 1
-          readiness:
-            enabled: true
-            type: HTTP
-            path: /login/index.php
-            spec:
-              initialDelaySeconds: 30
-              periodSeconds: 5
-              timeoutSeconds: 3
-              failureThreshold: 6
-              successThreshold: 1
-              
-        resources: {}
+defaultPodOptions:
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: '{{ include "bjw-s.common.lib.chart.names.name" . }}'
 
 service:
   main:
@@ -214,8 +353,23 @@ ingress:
 persistence:
   moodledata:
     enabled: true
-    type: persistentVolumeClaim
-    accessMode: ReadWriteOnce
-    size: 8Gi
+    accessMode: ReadWriteMany
+    storageClass: standard-rwx
+    size: 100Gi
     globalMounts:
       - path: /moodleroot/moodledata
+  localcache:
+    enabled: true
+    type: emptyDir
+    globalMounts:
+      - path: /tmp/moodle/localcache
+  localrequest:
+    enabled: true
+    type: emptyDir
+    globalMounts:
+      - path: /moodleroot/moodledata/localrequest
+  tmp:
+    enabled: true
+    type: emptyDir
+    globalMounts:
+      - path: /tmp
