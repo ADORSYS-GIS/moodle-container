@@ -12,9 +12,8 @@ A Helm chart for deploying [adorsys-gis/moodle-container](https://github.com/ADO
 
 ## Architecture
 
-This chart deploys Moodle as a **multi-pod Deployment with HPA** (2–3 replicas), with:
+This chart deploys Moodle as a **multi-pod StatefulSet with HPA** (2–3 replicas), with:
 
-- **CronJob** for Moodle scheduled tasks (separated from web pods)
 - **RWX Filestore PVC** for shared `moodledata`
 - **emptyDir** volumes for `localcache`, `localrequest`, and `/tmp`
 - **External Redis** for sessions, application cache, and locks
@@ -109,19 +108,11 @@ The chart auto-generates Kubernetes Secrets for passwords if no `existingSecret`
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `controllers.main.type` | `deployment` | Controller type (`deployment` or `statefulset`) |
+| `controllers.main.type` | `statefulset` | Controller type (`statefulset` or `deployment`) |
 | `controllers.main.replicas` | `2` | Number of pod replicas |
 | `controllers.main.horizontalPodAutoscaler.minReplicas` | `2` | HPA minimum replicas |
 | `controllers.main.horizontalPodAutoscaler.maxReplicas` | `3` | HPA maximum replicas |
 | `controllers.main.podDisruptionBudget.minAvailable` | `1` | PDB minimum available pods |
-
-### Controller: Moodle CronJob
-
-| Key | Default | Description |
-|-----|---------|-------------|
-| `controllers.cron.type` | `cronjob` | Controller type (must be `cronjob`) |
-| `controllers.cron.cronjob.schedule` | `*/1 * * * *` | Cron schedule |
-| `controllers.cron.cronjob.concurrencyPolicy` | `Forbid` | Prevent overlapping cron runs |
 
 ### Persistence
 
@@ -189,10 +180,6 @@ helm install my-moodle moodle/moodle \
 ### Plugin Installation
 
 The Docker image has `$CFG->disableupdateautodeploy = true` set in `config.php`. This **prevents plugin installation via the Moodle web interface**. All plugins must be pre-installed in the Docker image. This is critical for multi-pod deployments where pod restarts would otherwise lose runtime-installed plugins.
-
-### Cron Execution
-
-Moodle cron is handled by a dedicated Kubernetes CronJob (`controllers.cron`), **not** by `crond` inside the web container. The `crond` daemon has been removed from the web pod entrypoint.
 
 ### Storage Layout
 
