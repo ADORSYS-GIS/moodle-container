@@ -3,6 +3,8 @@
 // All plugins must be pre-installed in the Docker image.
 $CFG->disableupdateautodeploy = true;
 
+$CFG->dirroot = '/moodleroot/moodle/public';
+$CFG->root = '/moodleroot/moodle';
 $CFG->localcachedir = '/tmp/moodle/localcache';
 
 // $CFG->lock_factory = '\\local_redislock\\lock\\redis_lock_factory';

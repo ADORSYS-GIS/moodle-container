@@ -1,10 +1,10 @@
 #!/bin/sh
 set -eu
 
-if [ -f "${MOODLE_PATH}/config.php" ] && [ -d "${MOODLE_PATH}/admin/tool/objectfs" ]; then
+if [ -f "${MOODLE_PATH}/config.php" ] && [ -d "${MOODLE_PATH}/public/admin/tool/objectfs" ]; then
   if ! grep -q "alternative_file_system_class" "${MOODLE_PATH}/config.php"; then
     echo "Injecting ObjectFS alternative file system into config.php (conditional on plugin availability) ..."
-    sed -i "/require_once/i if (is_dir('${MOODLE_PATH}/admin/tool/objectfs/classes')) { \$CFG->alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system'; }" "${MOODLE_PATH}/config.php"
+    sed -i "/require_once/i if (is_dir('${MOODLE_PATH}/public/admin/tool/objectfs/classes')) { \$CFG->alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system'; }" "${MOODLE_PATH}/config.php"
   else
     echo "ObjectFS alternative file system already present in config.php ..."
   fi
@@ -19,7 +19,7 @@ if [ -f "${MOODLE_PATH}/config.php" ] && [ -d "${MOODLE_PATH}/admin/tool/objectf
   fi
 fi
 
-if [ ! -d "${MOODLE_PATH}/admin/tool/objectfs" ]; then
+if [ ! -d "${MOODLE_PATH}/public/admin/tool/objectfs" ]; then
   echo "tool_objectfs plugin files are not mounted, skipping ObjectFS init ..."
   exit 0
 fi

@@ -64,9 +64,9 @@ services:
       - -c
       - |
         . /opt/setup_moodle.sh
-        if [ "$${ENABLE_OBJECTFS:-no}" = "yes" ] && ! grep -q "alternative_file_system_class" /moodleroot/moodle/config.php && [ -d /moodleroot/moodle/admin/tool/objectfs/classes ]; then
+        if [ "$${ENABLE_OBJECTFS:-no}" = "yes" ] && ! grep -q "alternative_file_system_class" /moodleroot/moodle/config.php && [ -d /moodleroot/moodle/public/admin/tool/objectfs/classes ]; then
           echo "Injecting ObjectFS into config.php from Compose (conditional on plugin availability)..."
-          sed -i "/require_once/i if (is_dir('/moodleroot/moodle/admin/tool/objectfs/classes')) { \$$CFG->alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system'; }" /moodleroot/moodle/config.php
+          sed -i "/require_once/i if (is_dir('/moodleroot/moodle/public/admin/tool/objectfs/classes')) { \$$CFG->alternative_file_system_class = '\\\\tool_objectfs\\\\s3_file_system'; }" /moodleroot/moodle/config.php
           sed -i "/require_once/i \$$CFG->disablebyteserving = true;" /moodleroot/moodle/config.php
           sed -i "/require_once/i unset(\$$CFG->xsendfilealiases);" /moodleroot/moodle/config.php
           sed -i "/require_once/i \$$CFG->xsendfile = null;" /moodleroot/moodle/config.php
@@ -100,8 +100,8 @@ services:
       OBJECTFS_SIGNING_METHOD: s3
     volumes:
       - moodledata_data:/moodleroot/moodledata
-      - objectfs_plugin:/moodleroot/moodle/admin/tool/objectfs:ro
-      - oidc_plugin:/moodleroot/moodle/auth/oidc:ro
+      - objectfs_plugin:/moodleroot/moodle/public/admin/tool/objectfs:ro
+      - oidc_plugin:/moodleroot/moodle/public/auth/oidc:ro
       # - plugins_downloads:/moodleroot/moodle/plugins/downloaded:ro
     depends_on:
       mariadb:
@@ -256,7 +256,7 @@ services:
       OBJECTFS_SIGNING_METHOD: s3
     volumes:
       - moodledata_data:/moodleroot/moodledata
-      - objectfs_plugin:/moodleroot/moodle/admin/tool/objectfs:ro
+      - objectfs_plugin:/moodleroot/moodle/public/admin/tool/objectfs:ro
       - ./.docker/objectfs/objectfs_init.sh:/scripts/objectfs_init.sh:ro
       - ./.docker/objectfs/configure_objectfs.php:/scripts/configure_objectfs.php:ro
     depends_on:
@@ -299,7 +299,7 @@ services:
       <<: *moodle_env
     volumes:
       - moodledata_data:/moodleroot/moodledata
-      - oidc_plugin:/moodleroot/moodle/auth/oidc:ro
+      - oidc_plugin:/moodleroot/moodle/public/auth/oidc:ro
       - ./.docker/oidc/oidc_init.sh:/scripts/oidc_init.sh:ro
     depends_on:
       mariadb:

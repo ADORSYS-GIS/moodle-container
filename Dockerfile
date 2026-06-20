@@ -29,7 +29,7 @@ RUN adduser -D -g 'www' www
 ARG MOODLE_ROOT_PATH='/moodleroot' \
     MOODLE_DATAROOT_PATH='/moodleroot/moodledata' \
     MOODLE_PATH='/moodleroot/moodle' \
-    MOODLE_BUILD_URL='https://download.moodle.org/download.php/direct/stable501/moodle-latest-501.tgz'
+    MOODLE_BUILD_URL='https://download.moodle.org/download.php/direct/stable502/moodle-latest-502.tgz'
 
 ENV MOODLE_URL='' \
     MOOSH_URL='' \
@@ -87,8 +87,8 @@ RUN mkdir -p "$MOODLE_PATH" "$MOODLE_DATAROOT_PATH" \
     && curl --fail --location --retry 5 --retry-all-errors --output "$archive_file" "$MOODLE_BUILD_URL" \
     && tar -xzf "$archive_file" --strip-components=1 -C "$MOODLE_PATH" \
     && rm -f "$archive_file" \
-    && mkdir -p "$MOODLE_PATH/local" \
-    && cp /root/.templates/moodle/local/defaults.php "$MOODLE_PATH/local/defaults.php" \
+    && mkdir -p "$MOODLE_PATH/local" "$MOODLE_PATH/public/local" \
+    && cp /root/.templates/moodle/public/local/defaults.php "$MOODLE_PATH/public/local/defaults.php" \
     && chown -R www:www "$MOODLE_ROOT_PATH" /var/lib/nginx \
     && chmod 0755 /opt/*.sh \
     && chown -R root:root /opt/*.sh

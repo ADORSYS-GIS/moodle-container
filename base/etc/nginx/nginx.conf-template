@@ -61,7 +61,7 @@ http {
     client_max_body_size 0;
     client_body_buffer_size 512k;
 
-    root $MOODLE_ROOT_PATH/moodle;
+    root $MOODLE_ROOT_PATH/moodle/public;
     index index.php index.html;
 
     location /healthz {
@@ -96,7 +96,7 @@ http {
       fastcgi_split_path_info ^(.+\.php)(/.+)$;
       include fastcgi_params;
       fastcgi_index index.php;
-      fastcgi_pass unix:/var/run/php8.2-fpm-moodle.sock;
+      fastcgi_pass unix:/var/run/php84-fpm-moodle.sock;
       fastcgi_read_timeout 1200;
     }
 
@@ -129,7 +129,7 @@ http {
       allow 127.0.0.1;
       deny all;
       include fastcgi_params;
-      fastcgi_pass unix:/var/run/php8.2-fpm-moodle.sock;
+      fastcgi_pass unix:/var/run/php84-fpm-moodle.sock;
       fastcgi_read_timeout 300;
     }
   }

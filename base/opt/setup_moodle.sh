@@ -139,7 +139,7 @@ rm -rvf /etc/nginx/nginx.conf-template
 envsubst \$MOODLE_ROOT_PATH < /etc/php84/php.ini-template > /etc/php84/php.ini
 rm -rvf /etc/php84/php.ini-template
 
-if [ ! -f "$MOODLE_PATH/version.php" ] ; then
+if [ ! -f "$MOODLE_PATH/public/version.php" ] ; then
   echo "Bundled Moodle core files are missing from $MOODLE_PATH."
   echo "Rebuild the image so Moodle is included at build time."
   exit 1
@@ -243,10 +243,10 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
   fi
 
   # Fix publicpaths check to point to the internal container on port 8080
-  if [ ! -f "$MOODLE_PATH/lib/classes/check/environment/publicpaths.modified" ] ; then
+  if [ ! -f "$MOODLE_PATH/public/lib/classes/check/environment/publicpaths.modified" ] ; then
     echo "Modifying publicpaths.php for port :8080 ..."
-    # sudo -u www sed -i 's/wwwroot/wwwroot\ \. \"\:8080\"/g' "$MOODLE_PATH/lib/classes/check/environment/publicpaths.php"
-    sudo -u www touch $MOODLE_PATH/lib/classes/check/environment/publicpaths.modified
+    # sudo -u www sed -i 's/wwwroot/wwwroot\ \. \"\:8080\"/g' "$MOODLE_PATH/public/lib/classes/check/environment/publicpaths.php"
+    sudo -u www touch $MOODLE_PATH/public/lib/classes/check/environment/publicpaths.modified
   fi
 
   # precomplie css cache for this pod
