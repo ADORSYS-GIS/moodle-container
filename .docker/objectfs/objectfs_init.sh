@@ -25,25 +25,25 @@ if [ ! -d "${MOODLE_PATH}/admin/tool/objectfs" ]; then
 fi
 
 echo "Installing or upgrading tool_objectfs ..."
-sudo -u www php82 -d max_input_vars=10000 \
+sudo -u www php84 -d max_input_vars=10000 \
   "${MOODLE_PATH}/admin/cli/upgrade.php" \
   --non-interactive \
   --allow-unstable
 
 echo "Purging caches to refresh plugin state ..."
-sudo -u www php82 -d max_input_vars=10000 \
+sudo -u www php84 -d max_input_vars=10000 \
   "${MOODLE_PATH}/admin/cli/purge_caches.php"
 
 echo "Applying tool_objectfs settings for MinIO ..."
-php82 /scripts/configure_objectfs.php
+php84 /scripts/configure_objectfs.php
 
 echo "Trying initial ObjectFS transfer tasks ..."
-sudo -u www php82 -d max_input_vars=10000 \
+sudo -u www php84 -d max_input_vars=10000 \
   "${MOODLE_PATH}/admin/cli/scheduled_task.php" \
   --execute='\tool_objectfs\task\push_objects_to_storage' || \
   echo "ObjectFS push task did not complete during init; Moodle cron can still process it later."
 
-sudo -u www php82 -d max_input_vars=10000 \
+sudo -u www php84 -d max_input_vars=10000 \
   "${MOODLE_PATH}/admin/cli/scheduled_task.php" \
   --execute='\tool_objectfs\task\delete_local_objects' || \
   echo "ObjectFS local-delete task did not complete during init; Moodle cron can still process it later."

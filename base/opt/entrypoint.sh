@@ -15,7 +15,7 @@
 
 . /opt/setup_moodle.sh
 
-/usr/sbin/php-fpm82
+/usr/sbin/php-fpm84
 /usr/sbin/nginx -g 'daemon off;'
 
 echo "Moodle Sucessfully Started. Listening for connections."

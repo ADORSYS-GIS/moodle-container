@@ -7,8 +7,8 @@ The image is built on top of **Alpine Linux 3.19.1** (`alpine:3.19.1`). Alpine i
 
 ## Installed Packages
 The image installs the core components required to run Moodle efficiently:
-- **Web Server & PHP**: `nginx`, `php82-fpm`, `php82-opcache`
-- **Database Connectivity**: `php82-mysqli`, `php82-redis`
+- **Web Server & PHP**: `nginx`, `php84-fpm`, `php84-opcache`
+- **Database Connectivity**: `php84-mysqli`, `php84-redis`
 - **Moodle Required PHP Extensions**: `iconv`, `mbstring`, `curl`, `openssl`, `tokenizer`, `intl`, `soap`, `xmlreader`, `fileinfo`, `sodium`, `exif`, `ctype`, `zip`, `xmlwriter`, `gd`, `simplexml`, `dom`, `xml`, `pecl-igbinary`, `phar`, `posix`, `pecl-zstd`
 - **System Utilities**: `tar`, `curl`, `gzip`, `envsubst`, `tzdata`, `sudo`, `vim`, `icu-data-full`
 

@@ -72,7 +72,7 @@ services:
           sed -i "/require_once/i \$$CFG->xsendfile = null;" /moodleroot/moodle/config.php
         fi
         /usr/sbin/crond
-        /usr/sbin/php-fpm82
+        /usr/sbin/php-fpm84
         /usr/sbin/nginx -g 'daemon off;'
     ports:
       - "8080:8080"
@@ -281,7 +281,7 @@ services:
     environment:
       PLUGIN_DIR: /plugin_downloads
       PLUGIN_REPO: https://github.com/microsoft/moodle-auth_oidc.git
-      PLUGIN_BRANCH: MOODLE_500_STABLE
+      PLUGIN_BRANCH: MOODLE_501_STABLE
     entrypoint: /bin/sh
     command:
       - -c

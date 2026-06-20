@@ -45,7 +45,7 @@ find "$backup_dir" -maxdepth 1 -type f -name '*.mbz' | sort | while IFS= read -r
   fi
 
   echo "Importing $(basename "$backup_file") into Moodle category $restore_category_id ..."
-  restore_output="$(sudo -u www php82 -d max_input_vars=10000 \
+  restore_output="$(sudo -u www php84 -d max_input_vars=10000 \
     "$MOODLE_PATH/admin/cli/restore_backup.php" \
     --file="$backup_file" \
     --categoryid="$restore_category_id" 2>&1)" || {

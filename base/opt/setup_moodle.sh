@@ -56,7 +56,7 @@ setupPath /tmp/nginx/uwsgi_temp www root
 setupPath /tmp/nginx/scgi_temp www root
 
 setupPath /etc/nginx root root
-setupPath /etc/php82 root root
+setupPath /etc/php84 root root
 
 setupPath $MOODLE_ROOT_PATH www www
 setupPath $MOODLE_PATH www www
@@ -66,7 +66,7 @@ setupPath $MOODLE_DATAROOT_PATH/moosh www www
 
 generate_config_php() {
   echo "Generating config.php file ..."
-  sudo -u www php82 -d max_input_vars=10000 \
+  sudo -u www php84 -d max_input_vars=10000 \
     $MOODLE_PATH/admin/cli/install.php \
     --lang=$MOODLE_LANGUAGE \
     --wwwroot=$SITE_URL \
@@ -128,7 +128,7 @@ if [ -d "/root/etc" ]; then
   echo  "Done syncing NGINX config files ..."
 
   echo  "Syncing PHP8.2 config files into place ..."
-  sudo -u root cp -R /root/etc/php82/* /etc/php82/
+  sudo -u root cp -R /root/etc/php84/* /etc/php84/
   echo  "Done syncing PHP8.2 config files ..."
 fi
 
@@ -136,8 +136,8 @@ fi
 envsubst \$MOODLE_ROOT_PATH < /etc/nginx/nginx.conf-template > /etc/nginx/nginx.conf
 rm -rvf /etc/nginx/nginx.conf-template
 
-envsubst \$MOODLE_ROOT_PATH < /etc/php82/php.ini-template > /etc/php82/php.ini
-rm -rvf /etc/php82/php.ini-template
+envsubst \$MOODLE_ROOT_PATH < /etc/php84/php.ini-template > /etc/php84/php.ini
+rm -rvf /etc/php84/php.ini-template
 
 if [ ! -f "$MOODLE_PATH/version.php" ] ; then
   echo "Bundled Moodle core files are missing from $MOODLE_PATH."
@@ -162,7 +162,7 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
     generate_config_php
 
     echo "Installing database ..."
-    db_install_output=$(sudo -u www php82 -d max_input_vars=10000 \
+    db_install_output=$(sudo -u www php84 -d max_input_vars=10000 \
       $MOODLE_PATH/admin/cli/install_database.php \
       --lang="$MOODLE_LANGUAGE" \
       --fullname="$MOODLE_SITENAME" \
@@ -176,7 +176,7 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
     if [ "${db_install_failed:-}" = "true" ]; then
       if echo "$db_install_output" | grep -qi "already present"; then
         echo "Database tables already present — running upgrade instead ..."
-        sudo -u www php82 -d max_input_vars=10000 \
+        sudo -u www php84 -d max_input_vars=10000 \
           $MOODLE_PATH/admin/cli/upgrade.php --non-interactive --allow-unstable
       else
         echo "$db_install_output"
@@ -193,41 +193,41 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
     echo "Configuring other specific settings ..."
 
     # moodle binaries
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtophp --set=/usr/bin/php82
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtodu --set=/usr/bin/du
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=aspellpath --set=/usr/bin/aspell
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtodot --set=/usr/bin/dot
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtogs --set=/usr/bin/gs
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtopython --set=/usr/bin/python3
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=enableblogs --set=0
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtophp --set=/usr/bin/php84
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtodu --set=/usr/bin/du
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=aspellpath --set=/usr/bin/aspell
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtodot --set=/usr/bin/dot
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtogs --set=/usr/bin/gs
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=pathtopython --set=/usr/bin/python3
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=enableblogs --set=0
 
     # moodle smtp settings
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtphosts --set="$SMTP_HOST:$SMTP_PORT"
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtpuser --set="$SMTP_USER"
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtppass --set="$SMTP_PASSWORD"
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtpsecure --set="$SMTP_PROTOCOL"
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=noreplyaddress --set="$MOODLE_MAIL_NOREPLY_ADDRESS"
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=emailsubjectprefix --set="$MOODLE_MAIL_PREFIX"
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtphosts --set="$SMTP_HOST:$SMTP_PORT"
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtpuser --set="$SMTP_USER"
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtppass --set="$SMTP_PASSWORD"
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=smtpsecure --set="$SMTP_PROTOCOL"
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=noreplyaddress --set="$MOODLE_MAIL_NOREPLY_ADDRESS"
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=emailsubjectprefix --set="$MOODLE_MAIL_PREFIX"
 
     if [ -n "${CURL_SECURITY_BLOCKED_HOSTS:-}" ]; then
-      sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=curlsecurityblockedhosts --set="$CURL_SECURITY_BLOCKED_HOSTS"
+      sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=curlsecurityblockedhosts --set="$CURL_SECURITY_BLOCKED_HOSTS"
     fi
     if [ -n "${CURL_SECURITY_ALLOWED_PORTS:-}" ]; then
-      sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=curlsecurityallowedport --set="$CURL_SECURITY_ALLOWED_PORTS"
+      sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name=curlsecurityallowedport --set="$CURL_SECURITY_ALLOWED_PORTS"
     fi
     # redis session cookies
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_handler_class" --set='\core\session\redis'
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_database" --set=0
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_host" --set=$REDIS_SESSION_ID_HOST
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_port" --set=$REDIS_SESSION_ID_PORT
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_auth" --set=$REDIS_SESSION_ID_AUTH_STRING
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_prefix" --set='mdl_sessid_'
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_acquire_lock_timeout" --set=120
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_acquire_lock_warn" --set=0
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_lock_expire" --set=7200
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_lock_retry" --set=100
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_serializer_use_igbinary" --set=true
-    # sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_compressor" --set='gzip'
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_handler_class" --set='\core\session\redis'
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_database" --set=0
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_host" --set=$REDIS_SESSION_ID_HOST
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_port" --set=$REDIS_SESSION_ID_PORT
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_auth" --set=$REDIS_SESSION_ID_AUTH_STRING
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_prefix" --set='mdl_sessid_'
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_acquire_lock_timeout" --set=120
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_acquire_lock_warn" --set=0
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_lock_expire" --set=7200
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_lock_retry" --set=100
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_serializer_use_igbinary" --set=true
+    # sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/cfg.php --name="session_redis_compressor" --set='gzip'
   fi
 
   # Avoid writing the config file
@@ -251,7 +251,7 @@ if [ ! -f "$MOODLE_DATAROOT_PATH/.moodle-installed" ] ; then
 
   # precomplie css cache for this pod
   echo "Precompiling boost's css theme ..."
-  sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/build_theme_css.php --themes=boost
+  sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/build_theme_css.php --themes=boost
 
   # persist setup
   sudo -u www touch $MOODLE_DATAROOT_PATH/.moodle-installed
@@ -269,9 +269,9 @@ else
 
   if [ -f "$MOODLE_DATAROOT_PATH/.moodle-autoupgrade" ]; then
     echo "Upgrading moodle..."
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/maintenance.php --enable
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/upgrade.php --non-interactive --allow-unstable
-    sudo -u www php82 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/maintenance.php --disable
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/maintenance.php --enable
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/upgrade.php --non-interactive --allow-unstable
+    sudo -u www php84 -d max_input_vars=10000 $MOODLE_PATH/admin/cli/maintenance.php --disable
   else
     echo "Skipped auto update of Moodle"
   fi

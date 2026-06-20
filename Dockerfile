@@ -11,15 +11,15 @@
 ## See the License for the specific language governing permissions and
 ## limitations under the License.
 
-FROM alpine:3.19.1
+FROM alpine:3.22
 
 USER root
 
-RUN apk update && apk add --no-cache tar curl gzip unzip nginx php82 php82-fpm php82-opcache \
-  php82-mysqli php82-iconv php82-mbstring php82-curl php82-openssl php82-tokenizer php82-intl \
-  php82-soap php82-xmlreader php82-fileinfo php82-sodium php82-exif php82-ctype php82-zip \
-  php82-xmlwriter php82-gd php82-simplexml php82-dom php82-xml php82-redis php82-pecl-igbinary \
-  php82-phar php82-posix php82-pecl-zstd envsubst tzdata sudo vim icu-data-full
+RUN apk update && apk add --no-cache tar curl gzip unzip nginx php84 php84-fpm php84-opcache \
+  php84-mysqli php84-iconv php84-mbstring php84-curl php84-openssl php84-tokenizer php84-intl \
+  php84-soap php84-xmlreader php84-fileinfo php84-sodium php84-exif php84-ctype php84-zip \
+  php84-xmlwriter php84-gd php84-simplexml php84-dom php84-xml php84-pecl-redis php84-pecl-igbinary \
+  php84-phar php84-posix php84-pecl-zstd php84-session envsubst tzdata sudo vim icu-data-full
 
 # Optional packages
 RUN apk add --no-cache aspell graphviz ghostscript python3 poppler-utils clamav
@@ -29,7 +29,7 @@ RUN adduser -D -g 'www' www
 ARG MOODLE_ROOT_PATH='/moodleroot' \
     MOODLE_DATAROOT_PATH='/moodleroot/moodledata' \
     MOODLE_PATH='/moodleroot/moodle' \
-    MOODLE_BUILD_URL='https://download.moodle.org/download.php/direct/stable500/moodle-latest-500.tgz'
+    MOODLE_BUILD_URL='https://download.moodle.org/download.php/direct/stable501/moodle-latest-501.tgz'
 
 ENV MOODLE_URL='' \
     MOOSH_URL='' \

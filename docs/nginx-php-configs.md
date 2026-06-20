@@ -9,7 +9,7 @@ Moodle frequently handles large file uploads (like video resources or heavy back
 - `client_max_body_size 512M;`: Allows Nginx to accept HTTP request bodies up to 512 MB.
 - `client_body_buffer_size 512k;`: Buffers the first 512 KB of the request body in memory before writing to temporary files, improving performance for small-to-medium files.
 
-**PHP (`base/etc/php82/php.ini-template`):**
+**PHP (`base/etc/php84/php.ini-template`):**
 - `post_max_size = 512M`: PHP will accept POST data up to 512 MB.
 - `upload_max_filesize = 512M`: PHP allows individual uploaded files to be up to 512 MB.
 
@@ -32,7 +32,7 @@ The environment is tuned to handle high concurrency efficiently.
 - `keepalive_timeout 15;`: Keeps idle client connections open for 15 seconds. Upstream load balancers (e.g. GCE/GKE) hold connections open between requests; a value too low (e.g. `3s`) causes premature teardown and results in sporadic 502 errors.
 - **Proxy Buffers:** Increased to `proxy_buffer_size 128k;` and `proxy_buffers 4 256k;` to handle large response headers and fast buffering of backend responses.
 
-**PHP-FPM (`base/etc/php82/php-fpm.d/moodle.conf`):**
+**PHP-FPM (`base/etc/php84/php-fpm.d/moodle.conf`):**
 - `pm = dynamic`: Workers are created on demand and reaped when idle, making far more efficient use of memory than the previous `static` mode.
 - `pm.max_children = 8`: Up to 8 concurrent PHP-FPM workers. At ~120 MB average RSS per worker, this stays within ~960 MB — well within a 2 Gi pod memory limit with headroom for Nginx and system overhead.
 - `pm.start_servers = 3` / `pm.min_spare_servers = 2` / `pm.max_spare_servers = 4`: Balances cold-start latency against memory usage. The pool pre-warms 3 workers and keeps between 2 and 4 idle workers available at all times.
@@ -49,7 +49,7 @@ The environment is tuned to handle high concurrency efficiently.
 
 ## 5. OPcache Configuration
 
-OPcache pre-compiles PHP scripts into bytecode and stores them in shared memory, eliminating the overhead of parsing and compiling on every request. The following settings are applied in `base/etc/php82/php.ini-template`:
+OPcache pre-compiles PHP scripts into bytecode and stores them in shared memory, eliminating the overhead of parsing and compiling on every request. The following settings are applied in `base/etc/php84/php.ini-template`:
 
 | Setting | Value | Reason |
 |---|---|---|
