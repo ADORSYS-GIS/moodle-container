@@ -1,0 +1,46 @@
+.pagelayout-login .login-layout-left {
+    padding: 0;
+    background: none !important;
+    position: relative;
+}
+.pagelayout-login .login-layout-left::after {
+    display: none;
+}
+.pagelayout-login .login-layout-left-content {
+    position: absolute;
+    inset: 0;
+    padding: 0;
+    margin: 0;
+    max-width: none;
+    border-radius: 0;
+    background: none;
+    display: flex;
+    align-items: stretch;
+}
+.pagelayout-login .login-layout-left-content .login-panel-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.pagelayout-login .login-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 1rem;
+}
+.pagelayout-login .login-form .login-form-username {
+    grid-column: 1;
+}
+.pagelayout-login .login-form .login-form-password {
+    grid-column: 2;
+}
+.pagelayout-login .login-form .text-end {
+    grid-column: 1 / -1;
+}
+.pagelayout-login .login-form .login-form-recaptcha {
+    grid-column: 1 / -1;
+}
+.pagelayout-login .login-form .login-form-submit {
+    grid-column: 1 / -1;
+}

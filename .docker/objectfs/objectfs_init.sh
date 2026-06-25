@@ -1,6 +1,11 @@
 #!/bin/sh
 set -eu
 
+if [ -f "${MOODLE_DATAROOT_PATH}/.objectfs-initialized" ]; then
+  echo "ObjectFS already initialized, skipping ..."
+  exit 0
+fi
+
 if [ -f "${MOODLE_PATH}/config.php" ] && [ -d "${MOODLE_PATH}/public/admin/tool/objectfs" ]; then
   if ! grep -q "alternative_file_system_class" "${MOODLE_PATH}/config.php"; then
     echo "Injecting ObjectFS alternative file system into config.php (conditional on plugin availability) ..."
@@ -48,4 +53,5 @@ sudo -u www php84 -d max_input_vars=10000 \
   --execute='\tool_objectfs\task\delete_local_objects' || \
   echo "ObjectFS local-delete task did not complete during init; Moodle cron can still process it later."
 
+sudo -u www touch "${MOODLE_DATAROOT_PATH}/.objectfs-initialized"
 echo "ObjectFS init completed."

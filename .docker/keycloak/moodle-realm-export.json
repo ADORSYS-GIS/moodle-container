@@ -1,0 +1,100 @@
+{
+  "realm": "moodle",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "maxFailureWaitSeconds": 900,
+  "minimumQuickLoginWaitSeconds": 60,
+  "waitIncrementSeconds": 60,
+  "maxDeltaTimeSeconds": 43200,
+  "failureFactor": 30,
+  "accessTokenLifespan": 300,
+  "ssoSessionMaxLifespan": 36000,
+  "ssoSessionIdleTimeout": 1800,
+  "clients": [
+    {
+      "clientId": "moodle-oidc",
+      "name": "Moodle OIDC Client",
+      "description": "OpenID Connect client for Moodle SSO",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "redirectUris": [
+        "https://localhost:8080/auth/oidc/",
+        "https://localhost:8080/auth/oidc/index.php",
+        "https://localhost:8080/",
+        "http://localhost:8080/auth/oidc/",
+        "http://localhost:8080/auth/oidc/index.php",
+        "http://localhost:8080/"
+      ],
+      "webOrigins": [
+        "https://localhost:8080",
+        "http://localhost:8080"
+      ],
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8080/*;https://localhost:8080/*;http://localhost:8080;https://localhost:8080",
+        "oauth2.device.authorization.grant.enabled": "false",
+        "backchannel.logout.session.required": "true",
+        "backchannel.logout.revoke.offline.tokens": "false",
+        "frontchannel.logout.session.required": "true",
+        "frontchannel.logout.url": "https://localhost:8080/auth/oidc/logout.php"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "moodleuser",
+      "enabled": true,
+      "email": "moodleuser@local.moodle",
+      "emailVerified": true,
+      "firstName": "Moodle",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "MoodleUser123!",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "username": "moodleteacher",
+      "enabled": true,
+      "email": "moodleteacher@local.moodle",
+      "emailVerified": true,
+      "firstName": "Moodle",
+      "lastName": "Teacher",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "MoodleTeacher123!",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

@@ -49,6 +49,7 @@ services:
       - /opt/setup_moodle.sh
     volumes:
       - moodledata_data:/moodleroot/moodledata
+      - ./theme/adorsys:/moodleroot/moodle/public/theme/adorsys:ro
     depends_on:
       mariadb:
         condition: service_healthy
@@ -70,6 +71,15 @@ services:
           sed -i "/require_once/i \$$CFG->disablebyteserving = true;" /moodleroot/moodle/config.php
           sed -i "/require_once/i unset(\$$CFG->xsendfilealiases);" /moodleroot/moodle/config.php
           sed -i "/require_once/i \$$CFG->xsendfile = null;" /moodleroot/moodle/config.php
+        fi
+        # Install/upgrade plugins (detects newly mounted themes like adorsys).
+        if [ -f "$MOODLE_PATH/admin/cli/upgrade.php" ]; then
+          sudo -u www php84 -d max_input_vars=10000 "$MOODLE_PATH/admin/cli/upgrade.php" --non-interactive --allow-unstable 2>&1 | grep -v "^$" || true
+        fi
+        # Set adorsys as default theme and build its CSS.
+        if [ -d "$MOODLE_PATH/public/theme/adorsys" ]; then
+          sudo -u www php84 -d max_input_vars=10000 "$MOODLE_PATH/admin/cli/cfg.php" --name=theme --set=adorsys || true
+          sudo -u www php84 -d max_input_vars=10000 "$MOODLE_PATH/admin/cli/build_theme_css.php" --themes=adorsys 2>&1 || true
         fi
         /usr/sbin/crond
         /usr/sbin/php-fpm84
@@ -102,6 +112,7 @@ services:
       - moodledata_data:/moodleroot/moodledata
       - objectfs_plugin:/moodleroot/moodle/public/admin/tool/objectfs:ro
       - oidc_plugin:/moodleroot/moodle/public/auth/oidc:ro
+      - ./theme/adorsys:/moodleroot/moodle/public/theme/adorsys:ro
       # - plugins_downloads:/moodleroot/moodle/plugins/downloaded:ro
     depends_on:
       mariadb:
@@ -297,10 +308,23 @@ services:
         sh /scripts/oidc_init.sh
     environment:
       <<: *moodle_env
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_EXTERNAL_URL: http://localhost:8180
+      KEYCLOAK_REALM: moodle
+      KEYCLOAK_ADMIN_USER: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      OIDC_CLIENT_ID: moodle-oidc
+      OIDC_IDP_TYPE: "3"
+      OIDC_SCOPE: "openid profile email"
+      OIDC_BINDING_USERNAME_CLAIM: email
+      OIDC_FORCE_REDIRECT: "false"
+      OIDC_SINGLE_SIGN_OFF: "true"
+      OIDC_PROVIDER_NAME: "Adorsys SSO"
     volumes:
       - moodledata_data:/moodleroot/moodledata
       - oidc_plugin:/moodleroot/moodle/public/auth/oidc:ro
       - ./.docker/oidc/oidc_init.sh:/scripts/oidc_init.sh:ro
+      - ./.docker/oidc/configure_oidc.php:/scripts/configure_oidc.php:ro
     depends_on:
       mariadb:
         condition: service_healthy
@@ -309,6 +333,10 @@ services:
       moodle-init:
         condition: service_completed_successfully
       oidc-downloader:
+        condition: service_completed_successfully
+      keycloak:
+        condition: service_healthy
+      objectfs-init:
         condition: service_completed_successfully
 
   # backup-restorer:
