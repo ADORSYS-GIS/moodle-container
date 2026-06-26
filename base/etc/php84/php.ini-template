@@ -361,13 +361,13 @@ disable_classes =
 ; the file operations performed.
 ; Note: if open_basedir is set, the cache is disabled
 ; https://php.net/realpath-cache-size
-;realpath_cache_size = 4096k
+realpath_cache_size = 8192k
 
 ; Duration of time, in seconds for which to cache realpath information for a given
 ; file or directory. For systems with rarely changing files, consider increasing this
 ; value.
 ; https://php.net/realpath-cache-ttl
-;realpath_cache_ttl = 120
+realpath_cache_ttl = 600
 
 ; Enables or disables the circular reference collector.
 ; https://php.net/zend.enable-gc
@@ -1845,7 +1845,7 @@ opcache.save_comments=1
 ;opcache.record_warnings=0
 
 ; Allow file existence override (file_exists, etc.) performance feature.
-;opcache.enable_file_override=0
+opcache.enable_file_override=1
 
 ; A bitmask, where each bit enables or disables the appropriate OPcache
 ; passes

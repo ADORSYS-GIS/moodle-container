@@ -38,6 +38,11 @@ http {
 
   keepalive_timeout 15;
 
+  # Client connection timeouts — prevent slowloris and stuck connections
+  client_body_timeout 30s;
+  client_header_timeout 30s;
+  send_timeout 30s;
+
   # Write temporary files to /tmp so they can be created as a non-privileged user
   client_body_temp_path /tmp/nginx/client_temp;
   proxy_temp_path /tmp/nginx/proxy_temp;
@@ -91,13 +96,35 @@ http {
       alias $MOODLE_ROOT_PATH/moodledata/;
     }
 
+    # Long-running admin/academic operations (backup, restore, grade export, reports, etc.) — 20 min timeout
+    # Must appear before the general PHP location so Nginx matches it first
+    # Only matches .php requests — static assets (.css/.js/.png) fall through to their own locations
+    # NOTE: /course/ and /grade/ are intentionally excluded because they match regular
+    # student-facing pages (viewing courses, grade overview) which should use the shorter timeout.
+    location ~ ^/(admin|backup|report)/.*\.php(/|$) {
+      fastcgi_split_path_info ^(.+\.php)(/.+)$;
+      include fastcgi_params;
+      fastcgi_index index.php;
+      fastcgi_pass unix:/var/run/php84-fpm-moodle.sock;
+      fastcgi_read_timeout 1200;
+
+      fastcgi_buffering on;
+      fastcgi_buffers 16 16k;
+      fastcgi_buffer_size 32k;
+    }
+
     # Pass the PHP scripts to PHP-FPM listening on the local Unix socket
     location ~ [^/]\.php(/|$) {
       fastcgi_split_path_info ^(.+\.php)(/.+)$;
       include fastcgi_params;
       fastcgi_index index.php;
       fastcgi_pass unix:/var/run/php84-fpm-moodle.sock;
-      fastcgi_read_timeout 1200;
+      fastcgi_read_timeout 300;
+
+      # Buffers: handle large Moodle responses without spilling to disk
+      fastcgi_buffering on;
+      fastcgi_buffers 16 16k;
+      fastcgi_buffer_size 32k;
     }
 
 

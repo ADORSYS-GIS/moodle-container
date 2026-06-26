@@ -17,10 +17,13 @@ Moodle frequently handles large file uploads (like video resources or heavy back
 Processing large files, restoring course backups, or generating heavy reports can take significant time. The timeout limits are raised above standard defaults to prevent premature termination.
 
 **Nginx:**
-- `fastcgi_read_timeout 1200;`: Nginx will wait up to **20 minutes** (1200 seconds) for PHP-FPM to return a response before throwing a 504 Gateway Timeout error.
+- Normal web requests: `fastcgi_read_timeout 300` (5 minutes). Nginx will wait up to 5 minutes for PHP-FPM before returning a 504 Gateway Timeout.
+- Long-running admin operations (backup, restore, grade export, reports): `fastcgi_read_timeout 1200` (20 minutes). Applied to paths under `/admin/`, `/backup/`, `/course/`, `/grade/`, and `/report/`.
+- Client connection timeouts: `client_body_timeout 30s`, `client_header_timeout 30s`, `send_timeout 30s` — prevent slowloris-style attacks and clean up stuck connections.
 
 **PHP:**
-- `max_execution_time = 1200`: A PHP script is allowed to run for up to **20 minutes** before the engine terminates it.
+- `max_execution_time = 1200`: A PHP script is allowed to run for up to **20 minutes** before the engine terminates it. Aligned with `request_terminate_timeout`.
+- `request_terminate_timeout = 1200`: PHP-FPM hard wall-clock limit of 20 minutes, matching Nginx's longest timeout.
 - `max_input_time = 180`: A script may spend up to 3 minutes parsing incoming request data (like large file uploads).
 
 ## 3. Worker and Process Tuning
@@ -31,17 +34,21 @@ The environment is tuned to handle high concurrency efficiently.
 - `worker_connections 8192;` and `worker_rlimit_nofile 8192;`: Allows each Nginx worker to handle up to 8,192 simultaneous network connections and open files.
 - `keepalive_timeout 15;`: Keeps idle client connections open for 15 seconds. Upstream load balancers (e.g. GCE/GKE) hold connections open between requests; a value too low (e.g. `3s`) causes premature teardown and results in sporadic 502 errors.
 - **Proxy Buffers:** Increased to `proxy_buffer_size 128k;` and `proxy_buffers 4 256k;` to handle large response headers and fast buffering of backend responses.
+- **FastCGI Buffers:** `fastcgi_buffers 16 16k` and `fastcgi_buffer_size 32k` (total 288 KB) prevent Nginx from spilling large Moodle responses to disk-based temporary files.
 
 **PHP-FPM (`base/etc/php84/php-fpm.d/moodle.conf`):**
 - `pm = dynamic`: Workers are created on demand and reaped when idle, making far more efficient use of memory than the previous `static` mode.
-- `pm.max_children = 8`: Up to 8 concurrent PHP-FPM workers. At ~120 MB average RSS per worker, this stays within ~960 MB — well within a 2 Gi pod memory limit with headroom for Nginx and system overhead.
-- `pm.start_servers = 3` / `pm.min_spare_servers = 2` / `pm.max_spare_servers = 4`: Balances cold-start latency against memory usage. The pool pre-warms 3 workers and keeps between 2 and 4 idle workers available at all times.
-- `pm.max_requests = 500`: Each worker is recycled after handling 500 requests, preventing long-lived memory leaks from accumulating in PHP extensions.
+- `pm.max_children = 25`: Up to 25 concurrent PHP-FPM workers. At ~120 MB average RSS per worker, peak usage is ~3 GB — well within a 4 Gi pod memory limit with headroom for OPcache (256 MB), Nginx, and system overhead.
+- `pm.start_servers = 8` / `pm.min_spare_servers = 4` / `pm.max_spare_servers = 16`: Balances cold-start latency against memory usage. The pool pre-warms 8 workers and keeps between 4 and 16 idle workers available at all times.
+- `pm.max_requests = 1000`: Each worker is recycled after handling 1000 requests, preventing long-lived memory leaks from accumulating in PHP extensions.
+- `pm.process_idle_timeout = 30s`: Idle workers are terminated after 30 seconds, balancing responsiveness against memory consumption.
+- `request_terminate_timeout = 1200`: Hard wall-clock timeout of 20 minutes, aligned with Nginx's `fastcgi_read_timeout` for long-running admin operations (backup, restore).
 - `memory_limit = 512M`: Each PHP process is allowed to consume up to 512 MB of RAM.
 
 ## 4. Security Boundaries
 - **Remote Code Execution Prevention:** In PHP-FPM, dangerous system functions are explicitly disabled:
-  `php_admin_value[disable_functions] = exec,passthru,shell_exec,system`
+  `php_admin_value[disable_functions] = passthru,shell_exec,system`
+  Note: `exec` is intentionally **not** disabled because Moodle core requires it for legitimate operations (ML backend Python execution via `mlbackend_python`, PDF annotation via Ghostscript in `assignfeedback_editpdf`).
 - **Internal File Protection:** Nginx immediately returns `404 Not Found` and denies access to sensitive internal files and directories such as `composer.json`, `/vendor/`, `readme.txt`, `.lock`, and environment variables.
 - **Hidden Files:** Nginx is configured to block access to all dot files (e.g., `.git`, `.env`) with the exception of the `.well-known` directory.
 - **Health Checks:** The FPM status and ping endpoints (`/fpm-status` and `/fpm-ping`) are strictly restricted to `127.0.0.1` (localhost).
@@ -65,6 +72,17 @@ OPcache pre-compiles PHP scripts into bytecode and stores them in shared memory,
 | `opcache.fast_shutdown` | `1` | Defer memory cleanup to the OS on shutdown, reducing per-request teardown time |
 | `opcache.jit` | `1235` | Enable the tracing JIT compiler, which provides the best throughput improvement for CPU-bound workloads |
 | `opcache.jit_buffer_size` | `100M` | Memory allocated to the JIT native code cache |
+| `opcache.enable_file_override` | `1` | With `validate_timestamps=0`, `file_exists()`/`is_file()` checks skip `stat()` entirely for cached files. Reduces filesystem I/O on every request. Safe because containers are immutable. |
+
+### Realpath Cache
+
+| Setting | Value | Reason |
+|---|---|---|
+| `realpath_cache_size` | `8192k` | Stores resolved file paths in memory; Moodle has ~18,000 PHP files, 8 MB covers all resolved paths |
+| `realpath_cache_ttl` | `600` | Cache paths for 10 minutes; safe because containers are immutable |
+
+> [!NOTE]
+> `realpath_cache` works in conjunction with OPcache. With both `opcache.validate_timestamps=0` and `opcache.enable_file_override=1`, nearly all `stat()` syscalls are eliminated per request, reducing filesystem I/O significantly under load.
 
 > [!IMPORTANT]
 > `opcache.save_comments = 1` is a **hard requirement** for Moodle. Never set it to `0` in production. The consequence is not an immediate crash but subtle, hard-to-diagnose runtime breakage in plugin loading and the caching subsystem.
