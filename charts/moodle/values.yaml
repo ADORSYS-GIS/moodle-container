@@ -271,7 +271,7 @@ persistence:
     enabled: true
     type: emptyDir
     globalMounts:
-      - path: /moodleroot/moodledata/localrequest
+      - path: /tmp/moodle/localrequest
   tmp:
     enabled: true
     type: emptyDir
