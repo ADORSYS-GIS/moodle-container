@@ -25,9 +25,7 @@ This chart deploys Moodle as a **multi-pod StatefulSet with HPA** (2–3 replica
 ## Install
 
 ```bash
-helm repo add moodle https://adorsys-gis.github.io/moodle-container
-helm repo update
-helm install my-moodle moodle/moodle
+helm install my-moodle oci://ghcr.io/adorsys-gis/charts/moodle --version <x.y.z>
 ```
 
 ## Configuration
