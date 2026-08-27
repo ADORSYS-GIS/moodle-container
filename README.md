@@ -18,14 +18,12 @@ To maintain clean, professional documentation, we have separated high-level proj
 
 ## ☸️ Helm Chart
 
-This repository hosts a Helm chart published via **GitHub Pages** using the [chart-releaser-action](https://helm.sh/docs/howto/chart_releaser_action/). Chart releases are automated — every push to `main` that changes `charts/moodle/**` triggers the workflow, which publishes a GitHub Release and updates the `gh-pages` branch index.
+This repository publishes its Helm chart as an **OCI artifact to GHCR**. Releases are automated — every push to `main` that changes `charts/moodle/**` triggers the workflow, which packages and pushes the chart to `oci://ghcr.io/adorsys-gis/charts/moodle`.
 
 ### Quick start
 
 ```bash
-helm repo add moodle https://adorsys-gis.github.io/moodle-container
-helm repo update
-helm install my-moodle moodle/moodle
+helm install my-moodle oci://ghcr.io/adorsys-gis/charts/moodle --version <x.y.z>
 ```
 
 > Full configuration reference and examples: [charts/moodle/README.md](charts/moodle/README.md)
@@ -51,7 +49,7 @@ moodle-container/
 ├── .github/
 │   └── workflows/
 │       ├── publish-image.yml     # Manual CI/CD release workflow targeting GHCR
-│       ├── release-chart.yml     # Automated Helm chart release to gh-pages
+│       ├── publish-chart-oci.yml # Automated Helm chart release to GHCR (OCI)
 │       └── test-build.yml        # Dry-run compilation test on push/PR
 ├── charts/
 │   └── moodle/                   # Helm chart (see charts/moodle/README.md)

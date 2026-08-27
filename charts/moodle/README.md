@@ -25,9 +25,7 @@ This chart deploys Moodle as a **multi-pod StatefulSet with HPA** (2–3 replica
 ## Install
 
 ```bash
-helm repo add moodle https://adorsys-gis.github.io/moodle-container
-helm repo update
-helm install my-moodle moodle/moodle
+helm install my-moodle oci://ghcr.io/adorsys-gis/charts/moodle --version <x.y.z>
 ```
 
 ## Configuration
@@ -139,7 +137,7 @@ The chart auto-generates Kubernetes Secrets for passwords if no `existingSecret`
 ### Minimal install (auto-generated secrets, single node)
 
 ```bash
-helm install my-moodle moodle/moodle \
+helm install my-moodle oci://ghcr.io/adorsys-gis/charts/moodle --version <x.y.z> \
   --set externalDatabase.host=mariadb.mariadb.svc.cluster.local \
   --set externalRedis.host=redis.redis.svc.cluster.local
 ```
@@ -147,7 +145,7 @@ helm install my-moodle moodle/moodle \
 ### Multi-pod GKE production deployment
 
 ```bash
-helm install my-moodle moodle/moodle \
+helm install my-moodle oci://ghcr.io/adorsys-gis/charts/moodle --version <x.y.z> \
   --set moodle.siteUrl=https://moodle.example.com \
   --set externalDatabase.type=pgsql \
   --set externalDatabase.host=cloudsql-proxy.cloudsql.svc.cluster.local \
@@ -167,7 +165,7 @@ helm install my-moodle moodle/moodle \
 ### With existing Secrets
 
 ```bash
-helm install my-moodle moodle/moodle \
+helm install my-moodle oci://ghcr.io/adorsys-gis/charts/moodle --version <x.y.z> \
   --set moodle.existingSecret=my-moodle-secret \
   --set externalDatabase.existingSecret=my-db-secret \
   --set externalRedis.existingSecret=my-redis-secret \
