@@ -81,12 +81,12 @@ controllers:
 
     containers:
       main:
-        image:
+        image: &moodleImage
           repository: ghcr.io/adorsys-gis/moodle-nginx
           tag: "5.2-r6a32c64"
           pullPolicy: IfNotPresent
 
-        env:
+        env: &moodleEnv
           # Moodle site settings
           SITE_URL: '{{ .Values.moodle.siteUrl }}'
           MOODLE_LANGUAGE: '{{ .Values.moodle.language }}'
@@ -221,6 +221,31 @@ controllers:
 
     podDisruptionBudget:
       minAvailable: 1
+
+  cron:
+    type: cronjob
+    cronjob:
+      schedule: "* * * * *"
+      concurrencyPolicy: Forbid
+
+    containers:
+      main:
+        image: *moodleImage
+        env: *moodleEnv
+
+        # Runs the same startup routine as the main controller before invoking
+        # cron, so a scheduled run always talks to a fully configured site.
+        command: ["/bin/sh", "-c"]
+        args:
+          - ". /opt/setup_moodle.sh && exec php84 $MOODLE_PATH/admin/cli/cron.php"
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
 
 defaultPodOptions:
   affinity:
