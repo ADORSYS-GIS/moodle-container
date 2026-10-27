@@ -8,6 +8,10 @@ on:
       - "base/**"
       - "config.php.template"
       - ".github/workflows/publish-image.yml"
+  schedule:
+    # Picks up upstream Alpine package and Moodle point-release security
+    # patches even when nothing in this repo changed.
+    - cron: "0 3 * * 1"
   workflow_dispatch:
 
 jobs:

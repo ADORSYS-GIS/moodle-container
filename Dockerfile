@@ -85,6 +85,10 @@ COPY --chown=www:www ["./base/moodle", "/root/.templates/moodle"]
 RUN mkdir -p "$MOODLE_PATH" "$MOODLE_DATAROOT_PATH" \
     && archive_file="$(mktemp)" \
     && curl --fail --location --retry 5 --retry-all-errors --output "$archive_file" "$MOODLE_BUILD_URL" \
+    && expected_sha256="$(curl --fail --location --retry 5 --retry-all-errors "$MOODLE_BUILD_URL.sha256" | sed -n 's/.*=[[:space:]]*\([0-9a-f]\{64\}\)[[:space:]]*$/\1/p')" \
+    && actual_sha256="$(sha256sum "$archive_file" | cut -d' ' -f1)" \
+    && [ -n "$expected_sha256" ] && [ "$expected_sha256" = "$actual_sha256" ] \
+    || { echo "Moodle tarball checksum mismatch: expected $expected_sha256, got $actual_sha256"; exit 1; } \
     && tar -xzf "$archive_file" --strip-components=1 -C "$MOODLE_PATH" \
     && rm -f "$archive_file" \
     && mkdir -p "$MOODLE_PATH/local" "$MOODLE_PATH/public/local" \
