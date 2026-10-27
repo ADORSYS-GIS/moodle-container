@@ -86,6 +86,15 @@ controllers:
           tag: "5.2-r6a32c64"
           pullPolicy: IfNotPresent
 
+        # The entrypoint still needs to run as root (it provisions directories
+        # and drops privileges to www itself via sudo), so only the Linux
+        # capabilities that setup actually requires are kept.
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+            add: ["CHOWN", "FOWNER", "DAC_OVERRIDE", "SETUID", "SETGID"]
+
         env:
           # Moodle site settings
           SITE_URL: '{{ .Values.moodle.siteUrl }}'
@@ -223,6 +232,10 @@ controllers:
       minAvailable: 1
 
 defaultPodOptions:
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
